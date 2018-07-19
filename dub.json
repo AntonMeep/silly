@@ -1,0 +1,13 @@
+{
+	"name": "silly",
+	"description": "",
+	"authors": [
+		"Anton Fediushin"
+	],
+	"copyright": "Copyright © 2018, Anton Fediushin",
+	"license": "MIT",
+	"sourceFiles": ["silly.d"],
+	"importPaths": ["."],
+	"versions": ["SillyDebug"],
+	"targetType": "sourceLibrary"
+}

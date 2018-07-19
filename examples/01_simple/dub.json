@@ -1,0 +1,21 @@
+{
+	"name": "01_simple",
+	"description": "",
+	"authors": [
+		"Anton Fediushin"
+	],
+	"copyright": "Copyright © 2018, Anton Fediushin",
+	"license": "MIT",
+	"configurations": [
+		{
+			"name": "executable",
+			"targetType": "executable"
+		},
+		{
+			"name": "unittest",
+			"dependencies": {
+				"silly": {"path": "../../"}
+			}
+		}
+	]
+}
