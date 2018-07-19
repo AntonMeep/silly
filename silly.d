@@ -10,9 +10,31 @@ import std.array;
 import std.range;
 import std.conv : to;
 import std.stdio;
+import std.concurrency;
+
+__gshared Settings globalSettings;
+
+struct Settings {
+	bool parallel = true;
+}
 
 shared static this() {
 	import core.runtime;
+	import std.getopt;
+	import std.ascii;
+
+	auto args = Runtime.args;
+
+	auto getoptResult = args.getopt(
+		"parallel", "execute tests in parallel. default: true", &globalSettings.parallel,
+	);
+
+	if(getoptResult.helpWanted) {
+		"Useful help message".writeln; // TODO
+
+		import core.stdc.stdlib : exit;
+		exit(0);
+	}
 
 	Runtime.extendedModuleUnitTester = () {
 		executeUnitTests;
@@ -26,19 +48,28 @@ void executeUnitTests() {
 
 	static import dub_test_root;
 
-	auto reporter = ListReporter();
-
-	static foreach(module_; __traits(getMember, dub_test_root, "allModules")) {
-		version(SillyDebug) pragma(msg, "silly | Looking for unittests in " ~ fullyQualifiedName!module_);
-		static foreach(test; __traits(getUnitTests, module_)) {
-			version(SillyDebug)
-				pragma(msg, "silly | Found " ~ fullyQualifiedName!test ~ " named `" ~ getTestName!test ~ "`");
-
-			reporter.add(executeTest!test);
+	auto scheduler = new FiberScheduler;
+	size_t workerCount;
+	scheduler.start({
+		static foreach(module_; __traits(getMember, dub_test_root, "allModules")) {
+			version(SillyDebug) pragma(msg, "silly | Looking for unittests in " ~ fullyQualifiedName!module_);
+			static foreach(test; __traits(getUnitTests, module_)) {
+				version(SillyDebug)
+					pragma(msg, "silly | Found " ~ fullyQualifiedName!test ~ " named `" ~ getTestName!test ~ "`");
+				++workerCount;
+				spawn({
+					ownerTid.send(executeTest!test);
+				});
+			}
 		}
-	}
 
-	reporter.finalize;
+		auto reporter = ListReporter();
+
+		foreach_reverse(i; 0..workerCount)
+			reporter.add(receiveOnly!TestResult);
+		
+		reporter.finalize;
+	});
 }
 
 TestResult executeTest(alias test)() {
@@ -57,7 +88,7 @@ TestResult executeTest(alias test)() {
 	} catch(Throwable t) {
 		ret.duration = MonoTime.currTime - started;
 		ret.succeed = false;
-		ret.thrown = t;
+		// ret.thrown = t;
 	}
 
 	return ret;
@@ -68,7 +99,6 @@ struct TestResult {
 	string testName;
 	size_t sourceLine;
 	bool succeed;
-	Throwable thrown;
 	Duration duration;
 }
 
