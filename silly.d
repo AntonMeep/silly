@@ -51,6 +51,7 @@ void executeUnitTests() {
 	auto scheduler = new FiberScheduler;
 	size_t workerCount;
 	scheduler.start({
+		auto started = MonoTime.currTime;
 		static foreach(module_; __traits(getMember, dub_test_root, "allModules")) {
 			version(SillyDebug) pragma(msg, "silly | Looking for unittests in " ~ fullyQualifiedName!module_);
 			static foreach(test; __traits(getUnitTests, module_)) {
@@ -69,15 +70,16 @@ void executeUnitTests() {
 			reporter.add(receiveOnly!TestResult);
 		
 		reporter.finalize;
+		"Finished in %s".writefln(MonoTime.currTime - started);
 	});
 }
 
 TestResult executeTest(alias test)() {
-	TestResult ret = TestResult(
-		fullyQualifiedName!test,
-		getTestName!test,
-		__traits(identifier, test).find("L").drop(1).until('_').to!size_t,
-	);
+	TestResult ret = {
+		fullName: fullyQualifiedName!test,
+		testName: getTestName!test,
+		sourceLine: __traits(identifier, test).find("L").drop(1).until('_').to!size_t,
+	};
 
 	auto started = MonoTime.currTime;
 
@@ -88,6 +90,14 @@ TestResult executeTest(alias test)() {
 	} catch(Throwable t) {
 		ret.duration = MonoTime.currTime - started;
 		ret.succeed = false;
+
+		foreach(th; t) {
+			immutable(string)[] trace;
+			foreach(i; th.info)
+				trace ~= i.idup;
+
+			ret.thrown ~= Thrown(th.message.idup, th.file, th.line, trace);
+		}
 		// ret.thrown = t;
 	}
 
@@ -100,6 +110,15 @@ struct TestResult {
 	size_t sourceLine;
 	bool succeed;
 	Duration duration;
+
+	immutable(Thrown)[] thrown;
+}
+
+struct Thrown {
+	string message;
+	string file;
+	size_t line;
+	immutable(string)[] info;
 }
 
 struct ListReporter {
@@ -115,7 +134,7 @@ struct ListReporter {
 	}
 
 	void finalize() {
-		foreach(result; m_results)
+		foreach(result; m_results) {
 			writefln!"%s %s `%s` located on line %d in %s"(
 				result.succeed
 					? m_passed
@@ -125,6 +144,12 @@ struct ListReporter {
 				result.sourceLine,
 				result.duration,
 			);
+			foreach(th; result.thrown) {
+				writefln!"%s(%d): %s"(th.file, th.line, th.message);
+				foreach(tr; th.info)
+					writefln!"%s"(tr);
+			}
+		}
 	}
 }
 
