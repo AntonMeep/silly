@@ -13,10 +13,9 @@ import std.stdio;
 import std.concurrency;
 
 __gshared SettingsImpl Settings;
-__gshared TerminalImpl Terminal;
 
 struct SettingsImpl {
-	
+	ColourMode colour;
 }
 
 shared static this() {
@@ -24,13 +23,20 @@ shared static this() {
 	import std.getopt;
 	import std.ascii;
 
-	Terminal = TerminalImpl.create(ColourMode.init);
-
 	auto args = Runtime.args;
 
 	auto getoptResult = args.getopt(
 		
 	);
+
+	if(Settings.colour == ColourMode.automatic) {
+		version(Posix) {
+			import core.sys.posix.unistd;
+			Settings.colour = isatty(STDOUT_FILENO) == 1 ? ColourMode.always : ColourMode.iAmBoring;
+		} else {
+			Settings.colour = ColourMode.iAmBoring;
+		}
+	}
 
 	if(getoptResult.helpWanted) {
 		"Useful help message".writeln; // TODO
@@ -125,10 +131,12 @@ struct Thrown {
 
 void listReporter(Array!TestResult results) {
 	foreach(result; results[].sort!((a, b) => a.fullName < b.fullName)) {
-		Terminal.writeln(
-			result.succeed ? Colourful("✓", Colour.ok) : Colourful("✗", Colour.achtung), " ",
-			result.fullName.splitter('.').array[0..$-1].joiner(".").to!string, " ",
-			result.testName, " ",
+		result.succeed
+			? colourWrite("✓ ", Colour.ok)
+			: colourWrite("✗ ", Colour.achtung);
+		writefln!"%s `%s` in %s"(
+			result.fullName.splitter('.').array[0..$-1].joiner(".").to!string,
+			result.testName,
 			result.duration,
 		);
 
@@ -164,55 +172,15 @@ enum ColourMode {
 	iAmBoring,
 }
 
-struct Colourful {
-	string text;
-	Colour colour;
-}
-
-struct TerminalImpl {
-	import core.stdc.stdlib;
-	private {
-		bool m_colourful;
-	}
-
-	static typeof(this) create(ColourMode mode) {
-		TerminalImpl t;
-		final switch(mode) with(ColourMode) {
-		case automatic:
-			version(Posix) {
-				import core.sys.posix.unistd;
-				t.m_colourful = isatty(STDOUT_FILENO) == 1;
-			} else {
-				t.m_colourful = false;
-			}
-			break;
-		case always:
-			t.m_colourful = true;
-			break;
-		case iAmBoring:
-			t.m_colourful = false;
-			break;
-		}
-		return t;
-	}
-
-	void writeln(ARGS...)(ARGS args) {
-		static foreach(i, arg; args) {
-			static if(is(typeof(arg) : Colourful)) {
-				this.write(arg);
-			} else {
-				stdout.write(arg);
-			}
-		}
-
-		stdout.writeln;
-	}
-
-	void write(Colourful c) {
+void colourWrite(T)(T t, Colour c)
+in(Settings.colour != ColourMode.automatic) {
+	if(Settings.colour == ColourMode.always) {
 		version(Posix) {
-			stdout.writef("\033[0;%dm%s\033[m", c.colour, c.text);
+			stdout.writef("\033[0;%dm%s\033[m", c, t);
 		} else {
-			stdout.write(c.text);
+			stdout.write(t);
 		}
+	} else {
+		stdout.write(t);
 	}
 }
