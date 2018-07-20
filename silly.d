@@ -106,7 +106,7 @@ TestResult executeTest(alias test)() {
 			foreach(i; th.info)
 				trace ~= i.idup;
 
-			ret.thrown ~= Thrown(th.message.idup, th.file, th.line, trace);
+			ret.thrown ~= Thrown(typeid(th).name, th.message.idup, th.file, th.line, trace);
 		}
 	}
 
@@ -123,6 +123,7 @@ struct TestResult {
 }
 
 struct Thrown {
+	string type;
 	string message;
 	string file;
 	size_t line;
@@ -141,7 +142,8 @@ void listReporter(Array!TestResult results) {
 		);
 
 		foreach(th; result.thrown) {
-			writefln!"%s(%d): %s"(th.file, th.line, th.message);
+			writefln!"%s has been thrown from %s:%d: %s"(th.type, th.file, th.line, th.message);
+
 			foreach(tr; th.info)
 				writefln!"%s"(tr);
 		}
