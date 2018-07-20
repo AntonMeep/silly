@@ -15,7 +15,7 @@ import std.concurrency;
 __gshared Settings globalSettings;
 
 struct Settings {
-	bool parallel = true;
+	
 }
 
 shared static this() {
@@ -26,7 +26,7 @@ shared static this() {
 	auto args = Runtime.args;
 
 	auto getoptResult = args.getopt(
-		"parallel", "execute tests in parallel. default: true", &globalSettings.parallel,
+		
 	);
 
 	if(getoptResult.helpWanted) {
@@ -64,12 +64,14 @@ void executeUnitTests() {
 			}
 		}
 
-		auto reporter = ListReporter();
+		Array!TestResult results;
+		results.reserve(workerCount);
 
-		foreach_reverse(i; 0..workerCount)
-			reporter.add(receiveOnly!TestResult);
-		
-		reporter.finalize;
+		foreach(i; 0..workerCount)
+			results ~= receiveOnly!TestResult;
+
+		results.listReporter;
+
 		"Finished in %s".writefln(MonoTime.currTime - started);
 	});
 }
@@ -78,7 +80,6 @@ TestResult executeTest(alias test)() {
 	TestResult ret = {
 		fullName: fullyQualifiedName!test,
 		testName: getTestName!test,
-		sourceLine: __traits(identifier, test).find("L").drop(1).until('_').to!size_t,
 	};
 
 	auto started = MonoTime.currTime;
@@ -98,7 +99,6 @@ TestResult executeTest(alias test)() {
 
 			ret.thrown ~= Thrown(th.message.idup, th.file, th.line, trace);
 		}
-		// ret.thrown = t;
 	}
 
 	return ret;
@@ -107,7 +107,6 @@ TestResult executeTest(alias test)() {
 struct TestResult {
 	string fullName;
 	string testName;
-	size_t sourceLine;
 	bool succeed;
 	Duration duration;
 
@@ -121,34 +120,20 @@ struct Thrown {
 	immutable(string)[] info;
 }
 
-struct ListReporter {
-	private {
-		Array!TestResult m_results;
-
-		enum m_passed = "✓";
-		enum m_failed = "✗";
-	}
-
-	void add(TestResult t) {
-		m_results ~= t;
-	}
-
-	void finalize() {
-		foreach(result; m_results) {
-			writefln!"%s %s `%s` located on line %d in %s"(
-				result.succeed
-					? m_passed
-					: m_failed,
-				result.fullName.splitter('.').array[0..$-1].joiner(".").to!string,
-				result.testName,
-				result.sourceLine,
-				result.duration,
-			);
-			foreach(th; result.thrown) {
-				writefln!"%s(%d): %s"(th.file, th.line, th.message);
-				foreach(tr; th.info)
-					writefln!"%s"(tr);
-			}
+void listReporter(Array!TestResult results) {
+	foreach(result; results[].sort!((a, b) => a.fullName < b.fullName)) {
+		writefln!"%s %s `%s` in %s"(
+			result.succeed
+				? "✓"
+				: "✗",
+			result.fullName.splitter('.').array[0..$-1].joiner(".").to!string,
+			result.testName,
+			result.duration,
+		);
+		foreach(th; result.thrown) {
+			writefln!"%s(%d): %s"(th.file, th.line, th.message);
+			foreach(tr; th.info)
+				writefln!"%s"(tr);
 		}
 	}
 }
