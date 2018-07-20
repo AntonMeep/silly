@@ -10,6 +10,7 @@ import std.range;
 import std.conv : to;
 import std.stdio;
 import std.concurrency;
+import std.format;
 
 __gshared SettingsImpl Settings;
 
@@ -23,6 +24,7 @@ shared static this() {
 	auto getoptResult = args.getopt(
 		"colours", "", &Settings.colours,
 		"traces", "", &Settings.traces,
+		"durations", "", &Settings.durations,
 	);
 
 	if(Settings.colours == ColourMode.automatic) {
@@ -131,11 +133,23 @@ void listReporter(Array!TestResult results) {
 		result.succeed
 			? colourWrite(" ✓ ", Colour.ok)
 			: colourWrite(" ✗ ", Colour.achtung);
-		writefln!"%s `%s` in %s"(
-			result.fullName.splitter('.').array[0..$-1].joiner(".").to!string,
-			result.testName,
-			result.duration,
-		);
+		
+		result.fullName.splitter('.').array[0..$-1].joiner(".").brightWrite;
+		write(" ", result.testName);
+
+		final switch(Settings.durations) with(DurationMode) {
+		case longest:
+			if(result.duration >= 100.msecs)
+				format!" (%d ms)"(result.duration.total!"msecs").colourWrite(Colour.achtung);
+			break;
+		case always:
+			writef!" (%d ms)"(result.duration.total!"msecs");
+			break;
+		case never:
+			break;
+		}
+
+		writeln;
 
 		foreach(th; result.thrown) {
 			writefln!"    %s has been thrown from %s:%d `%s`"(th.type, th.file, th.line, th.message);
@@ -148,7 +162,7 @@ void listReporter(Array!TestResult results) {
 				break;
 			case full:
 				writeln("    --- Trace ---");
-				th.info.each!writeln;
+				th.info.each!(a => writeln("    ", a));
 				writeln("    -------------");
 				break;
 			case none:
@@ -159,8 +173,9 @@ void listReporter(Array!TestResult results) {
 }
 
 struct SettingsImpl {
-	ColourMode colours;
-	TraceMode  traces;
+	ColourMode   colours;
+	TraceMode    traces;
+	DurationMode durations;
 }
 
 enum ColourMode {
@@ -175,7 +190,14 @@ enum TraceMode {
 	none,
 }
 
+enum DurationMode {
+	longest,
+	always,
+	never,
+}
+
 enum Colour {
+	none,
 	ok = 32,
 	lit = 35,
 	achtung = 31,
@@ -186,6 +208,23 @@ in(Settings.colours != ColourMode.automatic) {
 	if(Settings.colours == ColourMode.always) {
 		version(Posix) {
 			stdout.writef("\033[0;%dm%s\033[m", c, t);
+		} else {
+			stdout.write(t);
+		}
+	} else {
+		stdout.write(t);
+	}
+}
+
+void brightWrite(T)(T t, Colour c = Colour.none)
+in(Settings.colours != ColourMode.automatic) {
+	if(Settings.colours == ColourMode.always) {
+		version(Posix) {
+			if(c == Colour.none) {
+				stdout.writef("\033[1m%s\033[m", t);
+			} else {
+				stdout.writef("\033[1;%dm%s\033[m", c, t);
+			}
 		} else {
 			stdout.write(t);
 		}
