@@ -147,7 +147,9 @@ void listReporter(Array!TestResult results) {
 				writeln("    -------------");
 				break;
 			case full:
+				writeln("    --- Trace ---");
 				th.info.each!writeln;
+				writeln("    -------------");
 				break;
 			case none:
 				break;
