@@ -1,6 +1,5 @@
 module silly;
 
-import std.experimental.logger;
 import std.traits;
 import std.typecons;
 import std.algorithm;
@@ -14,10 +13,6 @@ import std.concurrency;
 
 __gshared SettingsImpl Settings;
 
-struct SettingsImpl {
-	ColourMode colour;
-}
-
 shared static this() {
 	import core.runtime;
 	import std.getopt;
@@ -26,15 +21,16 @@ shared static this() {
 	auto args = Runtime.args;
 
 	auto getoptResult = args.getopt(
-		
+		"colours", "", &Settings.colours,
+		"traces", "", &Settings.traces,
 	);
 
-	if(Settings.colour == ColourMode.automatic) {
+	if(Settings.colours == ColourMode.automatic) {
 		version(Posix) {
 			import core.sys.posix.unistd;
-			Settings.colour = isatty(STDOUT_FILENO) == 1 ? ColourMode.always : ColourMode.iAmBoring;
+			Settings.colours = isatty(STDOUT_FILENO) == 1 ? ColourMode.always : ColourMode.iAmBoring;
 		} else {
-			Settings.colour = ColourMode.iAmBoring;
+			Settings.colours = ColourMode.iAmBoring;
 		}
 	}
 
@@ -144,9 +140,53 @@ void listReporter(Array!TestResult results) {
 		foreach(th; result.thrown) {
 			writefln!"%s has been thrown from %s:%d: %s"(th.type, th.file, th.line, th.message);
 
-			foreach(tr; th.info)
-				writefln!"%s"(tr);
+			final switch(Settings.traces) with(TraceMode) {
+			case truncated:
+				th.info.until!(a => a.startsWith(__FILE__)).each!writeln;
+				break;
+			case full:
+				th.info.each!writeln;
+				break;
+			case none:
+				break;
+			}
 		}
+	}
+}
+
+struct SettingsImpl {
+	ColourMode colours;
+	TraceMode  traces;
+}
+
+enum ColourMode {
+	automatic,
+	always,
+	iAmBoring,
+}
+
+enum TraceMode {
+	truncated,
+	full,
+	none,
+}
+
+enum Colour {
+	ok = 32,
+	lit = 35,
+	achtung = 31,
+}
+
+void colourWrite(T)(T t, Colour c)
+in(Settings.colours != ColourMode.automatic) {
+	if(Settings.colours == ColourMode.always) {
+		version(Posix) {
+			stdout.writef("\033[0;%dm%s\033[m", c, t);
+		} else {
+			stdout.write(t);
+		}
+	} else {
+		stdout.write(t);
 	}
 }
 
@@ -160,29 +200,4 @@ string getTestName(alias test)() {
 	}
 
 	done: return name;
-}
-
-enum Colour {
-	ok = 32,
-	lit = 35,
-	achtung = 31,
-}
-
-enum ColourMode {
-	automatic,
-	always,
-	iAmBoring,
-}
-
-void colourWrite(T)(T t, Colour c)
-in(Settings.colour != ColourMode.automatic) {
-	if(Settings.colour == ColourMode.always) {
-		version(Posix) {
-			stdout.writef("\033[0;%dm%s\033[m", c, t);
-		} else {
-			stdout.write(t);
-		}
-	} else {
-		stdout.write(t);
-	}
 }
