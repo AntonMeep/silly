@@ -129,8 +129,8 @@ struct Thrown {
 void listReporter(Array!TestResult results) {
 	foreach(result; results[].sort!((a, b) => a.fullName < b.fullName)) {
 		result.succeed
-			? colourWrite("✓ ", Colour.ok)
-			: colourWrite("✗ ", Colour.achtung);
+			? colourWrite(" ✓ ", Colour.ok)
+			: colourWrite(" ✗ ", Colour.achtung);
 		writefln!"%s `%s` in %s"(
 			result.fullName.splitter('.').array[0..$-1].joiner(".").to!string,
 			result.testName,
@@ -138,11 +138,13 @@ void listReporter(Array!TestResult results) {
 		);
 
 		foreach(th; result.thrown) {
-			writefln!"%s has been thrown from %s:%d: %s"(th.type, th.file, th.line, th.message);
+			writefln!"    %s has been thrown from %s:%d `%s`"(th.type, th.file, th.line, th.message);
 
 			final switch(Settings.traces) with(TraceMode) {
 			case truncated:
-				th.info.until!(a => a.startsWith(__FILE__)).each!writeln;
+				writeln("    --- Trace ---");
+				th.info.until!(a => a.startsWith(__FILE__)).each!(a => writeln("    ", a));
+				writeln("    -------------");
 				break;
 			case full:
 				th.info.each!writeln;
