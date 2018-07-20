@@ -22,9 +22,15 @@ shared static this() {
 	auto args = Runtime.args;
 
 	auto getoptResult = args.getopt(
-		"colours", "", &Settings.colours,
-		"traces", "", &Settings.traces,
-		"durations", "", &Settings.durations,
+		"colours",
+			"Use colours (automatic, always or iAmBoring). Default is automatic",
+			&Settings.colours,
+		"traces",
+			"Show traces (truncated, full or none). Default is truncated",
+			&Settings.traces,
+		"durations",
+			"Show durations (longest, always or never). Default is longest",
+			&Settings.durations,
 	);
 
 	if(Settings.colours == ColourMode.automatic) {
@@ -37,7 +43,13 @@ shared static this() {
 	}
 
 	if(getoptResult.helpWanted) {
-		"Useful help message".writeln; // TODO
+		"Usage:\n\tdub test -- <options>\n".writeln;
+
+		"Options:".writeln;
+
+		import std.string : leftJustifier;
+		getoptResult.options
+			.each!(a => writefln!"  %s\t%s\t%s"(a.optShort, a.optLong.leftJustifier(10), a.help));
 
 		import core.stdc.stdlib : exit;
 		exit(0);
