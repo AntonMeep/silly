@@ -12,6 +12,8 @@ import std.stdio;
 import std.concurrency;
 import std.format;
 
+import core.stdc.stdlib : exit;
+
 __gshared SettingsImpl Settings;
 
 shared static this() {
@@ -51,7 +53,6 @@ shared static this() {
 		getoptResult.options
 			.each!(a => writefln!"  %s\t%s\t%s"(a.optShort, a.optLong.leftJustifier(10), a.help));
 
-		import core.stdc.stdlib : exit;
 		exit(0);
 	}
 
@@ -92,6 +93,9 @@ void executeUnitTests() {
 		results.listReporter;
 
 		"Finished in %s".writefln(MonoTime.currTime - started);
+
+		if(results[].any!(a => !a.succeed))
+			1.exit;
 	});
 }
 
