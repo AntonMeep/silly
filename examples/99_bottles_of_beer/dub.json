@@ -6,7 +6,7 @@
 	],
 	"copyright": "Copyright © 2018, Anton Fediushin",
 	"license": "MIT",
-	"preGenerateCommands": ["echo Run 'dub generate.d' if dub can't find source files"]
+	"preGenerateCommands": ["echo \"Run 'dub generate.d' if dub can't find source files\""],
 	"configurations": [
 		{
 			"name": "executable",
