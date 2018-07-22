@@ -8,6 +8,14 @@
 	"license": "MIT",
 	"sourceFiles": ["silly.d"],
 	"importPaths": ["."],
-	"versions": ["SillyDebug"],
-	"targetType": "sourceLibrary"
+	"targetType": "sourceLibrary",
+	"configurations": [
+		{
+			"name": "silly"
+		},
+		{
+			"name": "debug",
+			"versions": ["SillyDebug"]
+		}
+	]
 }
