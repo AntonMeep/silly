@@ -41,7 +41,7 @@ shared static this() {
 
 		import std.string : leftJustifier;
 		foreach(option; getoptResult.options)
-			writefln!"  %s\t%s\t%s"(option.optShort, option.optLong.leftJustifier(10), option.help);
+			"  %s\t%s\t%s".writefln(option.optShort, option.optLong.leftJustifier(10), option.help);
 
 		exit(0);
 	}
@@ -171,10 +171,10 @@ void listReporter(Array!TestResult results) {
 		final switch(Settings.durations) with(DurationMode) {
 		case longest:
 			if(result.duration >= 100.msecs)
-				format!" (%d ms)"(result.duration.total!"msecs").colourWrite(Colour.achtung);
+				" (%d ms)".format(result.duration.total!"msecs").colourWrite(Colour.achtung);
 			break;
 		case always:
-			writef!" (%d ms)"(result.duration.total!"msecs");
+			" (%d ms)".writef(result.duration.total!"msecs");
 			break;
 		case never:
 			break;
@@ -183,7 +183,7 @@ void listReporter(Array!TestResult results) {
 		writeln;
 
 		foreach(th; result.thrown) {
-			writefln!"    %s has been thrown from %s:%d `%s`"(th.type, th.file, th.line, th.message);
+			"    %s has been thrown from %s:%d `%s`".writefln(th.type, th.file, th.line, th.message);
 
 			final switch(Settings.traces) with(TraceMode) {
 			case truncated:
