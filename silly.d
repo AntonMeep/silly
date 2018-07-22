@@ -150,7 +150,13 @@ void listReporter(Array!TestResult results) {
 			? colourWrite(" ✓ ", Colour.ok)
 			: colourWrite(" ✗ ", Colour.achtung);
 		
-		result.fullName.splitter('.').array[0..$-1].joiner(".").brightWrite;
+		auto module_ = result.fullName.splitter('.').array[0..$-1].joiner(".");
+		
+		if(module_.walkLength > 30) {
+			module_.tail(30).find(".").brightWrite;
+		} else {
+			module_.brightWrite;
+		}
 		write(" ", result.testName);
 
 		final switch(Settings.durations) with(DurationMode) {
