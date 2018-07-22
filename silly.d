@@ -1,11 +1,12 @@
 module silly;
 
-import core.stdc.stdlib : exit;
-import core.time : Duration, MonoTime;
-import std.concurrency;
+import core.stdc.stdlib    : exit;
+import core.time           : Duration, MonoTime;
 import std.container.array : Array;
+import std.traits          : fullyQualifiedName;
+
+import std.concurrency;
 import std.stdio;
-import std.traits : fullyQualifiedName;
 
 __gshared SettingsImpl Settings;
 
@@ -156,10 +157,10 @@ struct Thrown {
 }
 
 void listReporter(Array!TestResult results) {
-	import std.format : format;
-	import std.string : lastIndexOf;
+	import core.time     : msecs;
 	import std.algorithm : sort, startsWith;
-	import core.time : msecs;
+	import std.format    : format;
+	import std.string    : lastIndexOf;
 	foreach(result; results[].sort!((a, b) => a.fullName < b.fullName)) {
 		result.succeed
 			? colourWrite(" ✓ ", Colour.ok)
