@@ -1,25 +1,17 @@
 module silly;
 
-import std.traits;
-import std.typecons;
-import std.algorithm;
-import core.time;
-import std.container.array;
-import std.array;
-import std.range;
-import std.conv : to;
-import std.stdio;
-import std.concurrency;
-import std.format;
-
 import core.stdc.stdlib : exit;
+import core.time : Duration, MonoTime;
+import std.concurrency;
+import std.container.array : Array;
+import std.stdio;
+import std.traits : fullyQualifiedName;
 
 __gshared SettingsImpl Settings;
 
 shared static this() {
-	import core.runtime;
-	import std.getopt;
-	import std.ascii;
+	import core.runtime : Runtime, UnitTestResult;
+	import std.getopt : getopt;
 
 	auto args = Runtime.args;
 
@@ -45,13 +37,11 @@ shared static this() {
 	}
 
 	if(getoptResult.helpWanted) {
-		"Usage:\n\tdub test -- <options>\n".writeln;
-
-		"Options:".writeln;
+		"Usage:\n\tdub test -- <options>\n\nOptions:".writeln;
 
 		import std.string : leftJustifier;
-		getoptResult.options
-			.each!(a => writefln!"  %s\t%s\t%s"(a.optShort, a.optLong.leftJustifier(10), a.help));
+		foreach(option; getoptResult.options)
+			writefln!"  %s\t%s\t%s"(option.optShort, option.optLong.leftJustifier(10), option.help);
 
 		exit(0);
 	}
@@ -63,6 +53,8 @@ shared static this() {
 }
 
 void executeUnitTests() {
+	import std.algorithm : any, count;
+
 	static if(!__traits(compiles, () {static import dub_test_root;}))
 		static assert(false, "Couldn't find an entrypoint. Make sure you are running unittests with `dub test`");
 
@@ -85,7 +77,7 @@ void executeUnitTests() {
 					"silly | Module ",
 					fullyQualifiedName!module_.truncateName,
 					" contains ",
-					__traits(getUnitTests, module_).length.to!string,
+					cast(int) __traits(getUnitTests, module_).length,
 					" unittests");
 		}
 
@@ -112,8 +104,9 @@ void executeUnitTests() {
 		}
 		" failed in %d ms".writefln(totalDuration.total!"msecs");
 
-		if(results[].any!(a => !a.succeed))
-			1.exit;
+		foreach(result; results)
+			if(!result.succeed)
+				exit(1);
 	});
 }
 
@@ -163,12 +156,16 @@ struct Thrown {
 }
 
 void listReporter(Array!TestResult results) {
+	import std.format : format;
+	import std.string : lastIndexOf;
+	import std.algorithm : sort, startsWith;
+	import core.time : msecs;
 	foreach(result; results[].sort!((a, b) => a.fullName < b.fullName)) {
 		result.succeed
 			? colourWrite(" ✓ ", Colour.ok)
 			: colourWrite(" ✗ ", Colour.achtung);
 		
-		result.fullName.splitter('.').array[0..$-1].joiner(".").truncateName.brightWrite;
+		result.fullName[0..result.fullName.lastIndexOf('.')].truncateName.brightWrite;
 		write(" ", result.testName);
 
 		final switch(Settings.durations) with(DurationMode) {
@@ -191,12 +188,14 @@ void listReporter(Array!TestResult results) {
 			final switch(Settings.traces) with(TraceMode) {
 			case truncated:
 				writeln("    --- Trace ---");
-				th.info.until!(a => a.startsWith(__FILE__)).each!(a => writeln("    ", a));
+				for(size_t i = 0; i <= th.info.length && !th.info[i].startsWith(__FILE__); ++i)
+					writeln("    ", th.info[i]);
 				writeln("    -------------");
 				break;
 			case full:
 				writeln("    --- Trace ---");
-				th.info.each!(a => writeln("    ", a));
+				foreach(line; th.info)
+					writeln("    ", line);
 				writeln("    -------------");
 				break;
 			case none:
@@ -279,6 +278,12 @@ string getTestName(alias test)() {
 	done: return name;
 }
 
-string truncateName(T)(T t) {
-	return t.walkLength > 30 ? t.tail(30).find(".").to!string : t.to!string;
+string truncateName(string s) {
+	import std.string : indexOf;
+	if(s.length > 30) {
+		auto i = s.indexOf('.', s.length - 30);
+		return s[i == -1 ? $-30 : i .. $];
+	}
+
+	return s;
 }
