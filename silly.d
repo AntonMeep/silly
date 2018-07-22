@@ -73,15 +73,20 @@ void executeUnitTests() {
 	scheduler.start({
 		auto started = MonoTime.currTime;
 		static foreach(module_; __traits(getMember, dub_test_root, "allModules")) {
-			version(SillyDebug) pragma(msg, "silly | Looking for unittests in " ~ fullyQualifiedName!module_);
 			static foreach(test; __traits(getUnitTests, module_)) {
-				version(SillyDebug)
-					pragma(msg, "silly | Found " ~ fullyQualifiedName!test ~ " named `" ~ getTestName!test ~ "`");
 				++workerCount;
 				spawn({
 					ownerTid.send(executeTest!test);
 				});
 			}
+
+			version(SillyDebug)
+				pragma(msg,
+					"silly | Module ",
+					fullyQualifiedName!module_.truncateName,
+					" contains ",
+					__traits(getUnitTests, module_).length.to!string,
+					" unittests");
 		}
 
 		Array!TestResult results;
@@ -90,9 +95,22 @@ void executeUnitTests() {
 		foreach(i; 0..workerCount)
 			results ~= receiveOnly!TestResult;
 
+		auto totalDuration = MonoTime.currTime - started;
+
 		results.listReporter;
 
-		"Finished in %s".writefln(MonoTime.currTime - started);
+		auto passed = results[].count!(a => a.succeed);
+		auto failed = results.length - passed;
+
+		writeln;
+		"Summary: ".brightWrite;
+		passed.colourWrite(Colour.ok); " passed, ".write;
+		if(failed) {
+			failed.colourWrite(Colour.achtung);
+		} else {
+			failed.write;
+		}
+		" failed in %d ms".writefln(totalDuration.total!"msecs");
 
 		if(results[].any!(a => !a.succeed))
 			1.exit;
@@ -150,13 +168,7 @@ void listReporter(Array!TestResult results) {
 			? colourWrite(" ✓ ", Colour.ok)
 			: colourWrite(" ✗ ", Colour.achtung);
 		
-		auto module_ = result.fullName.splitter('.').array[0..$-1].joiner(".");
-		
-		if(module_.walkLength > 30) {
-			module_.tail(30).find(".").brightWrite;
-		} else {
-			module_.brightWrite;
-		}
+		result.fullName.splitter('.').array[0..$-1].joiner(".").truncateName.brightWrite;
 		write(" ", result.testName);
 
 		final switch(Settings.durations) with(DurationMode) {
@@ -265,4 +277,8 @@ string getTestName(alias test)() {
 	}
 
 	done: return name;
+}
+
+string truncateName(T)(T t) {
+	return t.walkLength > 30 ? t.tail(30).find(".").to!string : t.to!string;
 }
