@@ -1,5 +1,7 @@
 module silly;
 
+version(unittest):
+
 import core.stdc.stdlib    : exit;
 import core.time           : Duration, MonoTime;
 import std.container.array : Array;
