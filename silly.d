@@ -151,7 +151,7 @@ struct Thrown {
 
 void listReporter(Array!TestResult results) {
 	import core.time     : msecs;
-	import std.algorithm : sort, startsWith;
+	import std.algorithm : sort, canFind;
 	import std.format    : format;
 	import std.string    : lastIndexOf;
 	foreach(result; results[].sort!((a, b) => a.fullName < b.fullName)) {
@@ -181,7 +181,7 @@ void listReporter(Array!TestResult results) {
 				writeln("    -------------------");
 			} else {
 				writeln("    --- Stack trace ---");
-				for(size_t i = 0; i < th.info.length && !th.info[i].startsWith(__FILE__); ++i)
+				for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
 					writeln("    ", th.info[i]);
 				writeln("    -------------------");
 			}
