@@ -23,9 +23,9 @@ shared static this() {
 		"traces",
 			"Show traces (truncated, full or none). Default is truncated",
 			&Settings.traces,
-		"durations",
-			"Show durations (longest, always or never). Default is longest",
-			&Settings.durations,
+		"show-durations",
+			"Show durations for all unit tests. Default is false",
+			&Settings.showDurations,
 	);
 
 	if(Settings.colours == ColourMode.automatic) {
@@ -169,16 +169,11 @@ void listReporter(Array!TestResult results) {
 		result.fullName[0..result.fullName.lastIndexOf('.')].truncateName.brightWrite;
 		write(" ", result.testName);
 
-		final switch(Settings.durations) with(DurationMode) {
-		case longest:
+		if(Settings.showDurations) {
+			" (%d ms)".writef(result.duration.total!"msecs");
+		} else {
 			if(result.duration >= 100.msecs)
 				" (%d ms)".format(result.duration.total!"msecs").colourWrite(Colour.achtung);
-			break;
-		case always:
-			" (%d ms)".writef(result.duration.total!"msecs");
-			break;
-		case never:
-			break;
 		}
 
 		writeln;
@@ -208,9 +203,9 @@ void listReporter(Array!TestResult results) {
 
 static struct Settings {
 static:
-	ColourMode   colours;
-	TraceMode    traces;
-	DurationMode durations;
+	ColourMode colours;
+	TraceMode  traces;
+	bool       showDurations;
 }
 
 enum ColourMode {
