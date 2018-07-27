@@ -125,7 +125,7 @@ TestResult executeTest(alias test)() {
 		test();
 		ret.duration = MonoTime.currTime - started;
 		ret.succeed = true;
-	} catch(Throwable t) {
+	} catch(Exception t) {
 		ret.duration = MonoTime.currTime - started;
 		ret.succeed = false;
 
