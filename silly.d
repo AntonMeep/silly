@@ -38,15 +38,6 @@ shared static this() {
 			exit(0);
 		}
 
-	if(Settings.useColours) {
-		version(Posix) {
-			import core.sys.posix.unistd;
-			Settings.useColours = isatty(STDOUT_FILENO) == 1;
-		} else {
-			Settings.useColours = false;
-		}
-	}
-
 	Runtime.extendedModuleUnitTester = () {
 		executeUnitTests;
 		return UnitTestResult(0,0,false,false);
@@ -90,16 +81,18 @@ void executeUnitTests() {
 
 		auto totalDuration = MonoTime.currTime - started;
 
+		Console.init;
+
 		results.listReporter;
 
 		auto passed = results[].count!(a => a.succeed);
 		auto failed = results.length - passed;
 
 		writeln;
-		"Summary: ".brightWrite;
-		passed.colourWrite(Colour.ok); " passed, ".write;
+		Console.write("Summary: ", Colour.none, true);
+		Console.write(passed, Colour.ok); " passed, ".write;
 		if(failed) {
-			failed.colourWrite(Colour.achtung);
+			Console.write(failed, Colour.achtung);
 		} else {
 			failed.write;
 		}
@@ -163,17 +156,17 @@ void listReporter(Array!TestResult results) {
 	import std.string    : lastIndexOf;
 	foreach(result; results[].sort!((a, b) => a.fullName < b.fullName)) {
 		result.succeed
-			? colourWrite(" ✓ ", Colour.ok)
-			: colourWrite(" ✗ ", Colour.achtung);
+			? Console.write(" ✓ ", Colour.ok)
+			: Console.write(" ✗ ", Colour.achtung);
 		
-		result.fullName[0..result.fullName.lastIndexOf('.')].truncateName.brightWrite;
+		Console.write(result.fullName[0..result.fullName.lastIndexOf('.')].truncateName, Colour.none, true);
 		write(" ", result.testName);
 
 		if(Settings.showDurations) {
 			" (%d ms)".writef(result.duration.total!"msecs");
 		} else {
 			if(result.duration >= 100.msecs)
-				" (%d ms)".format(result.duration.total!"msecs").colourWrite(Colour.achtung);
+				Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
 		}
 
 		writeln;
@@ -188,7 +181,7 @@ void listReporter(Array!TestResult results) {
 				writeln("    -------------------");
 			} else {
 				writeln("    --- Stack trace ---");
-				for(size_t i = 0; i <= th.info.length && !th.info[i].startsWith(__FILE__); ++i)
+				for(size_t i = 0; i < th.info.length && !th.info[i].startsWith(__FILE__); ++i)
 					writeln("    ", th.info[i]);
 				writeln("    -------------------");
 			}
@@ -210,31 +203,37 @@ enum Colour {
 	achtung = 31,
 }
 
-void colourWrite(T)(T t, Colour c) {
-	if(Settings.useColours) {
-		version(Posix) {
-			stdout.writef("\033[0;%dm%s\033[m", c, t);
-		} else {
-			stdout.write(t);
-		}
-	} else {
-		stdout.write(t);
-	}
-}
-
-void brightWrite(T)(T t, Colour c = Colour.none) {
-	if(Settings.useColours) {
-		version(Posix) {
-			if(c == Colour.none) {
-				stdout.writef("\033[1m%s\033[m", t);
+static struct Console {
+static:
+	void init() {
+		if(Settings.useColours) {
+			version(Posix) {
+				import core.sys.posix.unistd;
+				Settings.useColours = isatty(STDOUT_FILENO) != 0;
 			} else {
-				stdout.writef("\033[1;%dm%s\033[m", c, t);
+				Settings.useColours = false;
+			}
+		} else {
+			Settings.useColours = false;
+		}
+	}
+
+	void write(T)(T t, Colour c = Colour.none, bool bright = false) {
+		if(Settings.useColours) {
+			version(Posix) {
+				if(c == Colour.none && bright) {
+					stdout.writef("\033[1m%s\033[m", t);
+				} else if(bright) {
+					stdout.writef("\033[1;%dm%s\033[m", c, t);
+				} else {
+					stdout.writef("\033[0;%dm%s\033[m", c, t);
+				}
+			} else {
+				stdout.write(t);
 			}
 		} else {
 			stdout.write(t);
 		}
-	} else {
-		stdout.write(t);
 	}
 }
 
