@@ -148,7 +148,7 @@ void listReporter(Array!TestResult results) {
 	import core.time     : msecs;
 	import std.algorithm : sort, canFind;
 	import std.format    : format;
-	import std.string    : lastIndexOf;
+	import std.string    : lastIndexOf, lineSplitter;
 	foreach(result; results[].sort!((a, b) => a.fullName < b.fullName)) {
 		result.succeed
 			? Console.write(" ✓ ", Colour.ok)
@@ -166,7 +166,10 @@ void listReporter(Array!TestResult results) {
 		writeln;
 
 		foreach(th; result.thrown) {
-			"    %s has been thrown from %s:%d `%s`".writefln(th.type, th.file, th.line, th.message);
+			"    %s has been thrown from %s:%d with the following message:"
+				.writefln(th.type, th.file, th.line);
+			foreach(line; th.message.lineSplitter)
+				"      ".writeln(line);
 
 			if(Settings.fullStackTraces) {
 				writeln("    --- Stack trace ---");
