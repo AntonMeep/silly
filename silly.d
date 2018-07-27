@@ -21,9 +21,9 @@ shared static this() {
 		"no-colours",
 			"Disable colours",
 			(string option) { Settings.useColours = false; },
-		"traces",
-			"Show traces (truncated, full or none). Default is truncated",
-			&Settings.traces,
+		"full-traces",
+			"Show full stack traces. By default traces are truncated",
+			&Settings.fullStackTraces,
 		"show-durations",
 			"Show durations for all unit tests. Default is false",
 			&Settings.showDurations,
@@ -181,21 +181,16 @@ void listReporter(Array!TestResult results) {
 		foreach(th; result.thrown) {
 			"    %s has been thrown from %s:%d `%s`".writefln(th.type, th.file, th.line, th.message);
 
-			final switch(Settings.traces) with(TraceMode) {
-			case truncated:
-				writeln("    --- Trace ---");
-				for(size_t i = 0; i <= th.info.length && !th.info[i].startsWith(__FILE__); ++i)
-					writeln("    ", th.info[i]);
-				writeln("    -------------");
-				break;
-			case full:
-				writeln("    --- Trace ---");
+			if(Settings.fullStackTraces) {
+				writeln("    --- Stack trace ---");
 				foreach(line; th.info)
 					writeln("    ", line);
-				writeln("    -------------");
-				break;
-			case none:
-				break;
+				writeln("    -------------------");
+			} else {
+				writeln("    --- Stack trace ---");
+				for(size_t i = 0; i <= th.info.length && !th.info[i].startsWith(__FILE__); ++i)
+					writeln("    ", th.info[i]);
+				writeln("    -------------------");
 			}
 		}
 	}
@@ -203,15 +198,9 @@ void listReporter(Array!TestResult results) {
 
 static struct Settings {
 static:
-	bool useColours = true;
-	TraceMode traces;
-	bool showDurations;
-}
-
-enum TraceMode {
-	truncated,
-	full,
-	none,
+	bool useColours      = true;
+	bool fullStackTraces = false;
+	bool showDurations   = false;
 }
 
 enum Colour {
