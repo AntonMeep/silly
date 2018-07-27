@@ -10,8 +10,6 @@ import std.traits          : fullyQualifiedName;
 import std.concurrency;
 import std.stdio;
 
-__gshared SettingsImpl Settings;
-
 shared static this() {
 	import core.runtime : Runtime, UnitTestResult;
 	import std.getopt : getopt;
@@ -208,7 +206,8 @@ void listReporter(Array!TestResult results) {
 	}
 }
 
-struct SettingsImpl {
+static struct Settings {
+static:
 	ColourMode   colours;
 	TraceMode    traces;
 	DurationMode durations;
