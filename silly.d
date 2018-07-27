@@ -16,7 +16,8 @@ shared static this() {
 
 	auto args = Runtime.args;
 
-	auto getoptResult = args.getopt(
+	// That's kinda ugly, but it works and makes code shorter
+	with(args.getopt(
 		"colours",
 			"Use colours (automatic, always or iAmBoring). Default is automatic",
 			&Settings.colours,
@@ -26,7 +27,16 @@ shared static this() {
 		"show-durations",
 			"Show durations for all unit tests. Default is false",
 			&Settings.showDurations,
-	);
+	))
+		if(helpWanted) {
+			"Usage:\n\tdub test -- <options>\n\nOptions:".writeln;
+
+			import std.string : leftJustifier;
+			foreach(option; options)
+				"  %s\t%s\t%s".writefln(option.optShort, option.optLong.leftJustifier(10), option.help);
+
+			exit(0);
+		}
 
 	if(Settings.colours == ColourMode.automatic) {
 		version(Posix) {
@@ -37,15 +47,6 @@ shared static this() {
 		}
 	}
 
-	if(getoptResult.helpWanted) {
-		"Usage:\n\tdub test -- <options>\n\nOptions:".writeln;
-
-		import std.string : leftJustifier;
-		foreach(option; getoptResult.options)
-			"  %s\t%s\t%s".writefln(option.optShort, option.optLong.leftJustifier(10), option.help);
-
-		exit(0);
-	}
 
 	Runtime.extendedModuleUnitTester = () {
 		executeUnitTests;
