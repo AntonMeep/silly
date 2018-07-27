@@ -1,0 +1,15 @@
+image: docker:stable
+
+services:
+- docker:dind
+
+dmd: &examples
+  variables:
+    COMPILER: dmd
+  stage: build
+  script: docker run -v$(pwd):/source ohboi/mini$COMPILER bash -c "cd examples && dub run --single runeveryexample.d"
+
+ldc:
+  <<: *examples
+  variables:
+    COMPILER: ldc
