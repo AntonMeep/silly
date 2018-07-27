@@ -13,12 +13,14 @@ import std.conv : to;
 enum TEMPLATE = q"EOS
 module %1$s;
 
+import std.exception : enforce;
+
 enum NUMBER_OF_BOTTLES = %2$d;
 
 enum BOTTLES = "%2$d bottle%3$s of beer on the wall\n%2$d bottle%3$s of beer\nTake one down, pass it around";
 
 unittest {
-	assert(NUMBER_OF_BOTTLES == %2$d);
+	enforce(NUMBER_OF_BOTTLES == %2$d);
 }
 
 EOS";

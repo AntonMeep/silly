@@ -1,9 +1,11 @@
 module simple.nameless;
 
+import std.exception : enforce;
+
 unittest {
-	assert(true);
+	enforce(true);
 }
 
 unittest {
-	assert(false);
+	enforce(false);
 }
