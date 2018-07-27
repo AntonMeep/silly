@@ -65,12 +65,7 @@ void executeUnitTests() {
 			}
 
 			version(SillyDebug)
-				pragma(msg,
-					"silly | Module ",
-					fullyQualifiedName!module_.truncateName,
-					" contains ",
-					cast(int) __traits(getUnitTests, module_).length,
-					" unittests");
+				pragma(msg, "silly | Module ", fullyQualifiedName!module_.truncateName, " contains ", cast(int) __traits(getUnitTests, module_).length, " unittests");
 		}
 
 		Array!TestResult results;
@@ -164,9 +159,8 @@ void listReporter(Array!TestResult results) {
 
 		if(Settings.showDurations) {
 			" (%d ms)".writef(result.duration.total!"msecs");
-		} else {
-			if(result.duration >= 100.msecs)
-				Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
+		} else if(result.duration >= 100.msecs) {
+			Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
 		}
 
 		writeln;
@@ -199,7 +193,7 @@ static:
 enum Colour {
 	none,
 	ok = 32,
-	lit = 35,
+	// lit = 35,
 	achtung = 31,
 }
 
