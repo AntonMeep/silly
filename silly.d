@@ -18,9 +18,9 @@ shared static this() {
 
 	// That's kinda ugly, but it works and makes code shorter
 	with(args.getopt(
-		"colours",
-			"Use colours (automatic, always or iAmBoring). Default is automatic",
-			&Settings.colours,
+		"no-colours",
+			"Disable colours",
+			(string option) { Settings.useColours = false; },
 		"traces",
 			"Show traces (truncated, full or none). Default is truncated",
 			&Settings.traces,
@@ -38,15 +38,14 @@ shared static this() {
 			exit(0);
 		}
 
-	if(Settings.colours == ColourMode.automatic) {
+	if(Settings.useColours) {
 		version(Posix) {
 			import core.sys.posix.unistd;
-			Settings.colours = isatty(STDOUT_FILENO) == 1 ? ColourMode.always : ColourMode.iAmBoring;
+			Settings.useColours = isatty(STDOUT_FILENO) == 1;
 		} else {
-			Settings.colours = ColourMode.iAmBoring;
+			Settings.useColours = false;
 		}
 	}
-
 
 	Runtime.extendedModuleUnitTester = () {
 		executeUnitTests;
@@ -204,27 +203,15 @@ void listReporter(Array!TestResult results) {
 
 static struct Settings {
 static:
-	ColourMode colours;
-	TraceMode  traces;
-	bool       showDurations;
-}
-
-enum ColourMode {
-	automatic,
-	always,
-	iAmBoring,
+	bool useColours = true;
+	TraceMode traces;
+	bool showDurations;
 }
 
 enum TraceMode {
 	truncated,
 	full,
 	none,
-}
-
-enum DurationMode {
-	longest,
-	always,
-	never,
 }
 
 enum Colour {
@@ -234,9 +221,8 @@ enum Colour {
 	achtung = 31,
 }
 
-void colourWrite(T)(T t, Colour c)
-in(Settings.colours != ColourMode.automatic) {
-	if(Settings.colours == ColourMode.always) {
+void colourWrite(T)(T t, Colour c) {
+	if(Settings.useColours) {
 		version(Posix) {
 			stdout.writef("\033[0;%dm%s\033[m", c, t);
 		} else {
@@ -247,9 +233,8 @@ in(Settings.colours != ColourMode.automatic) {
 	}
 }
 
-void brightWrite(T)(T t, Colour c = Colour.none)
-in(Settings.colours != ColourMode.automatic) {
-	if(Settings.colours == ColourMode.always) {
+void brightWrite(T)(T t, Colour c = Colour.none) {
+	if(Settings.useColours) {
 		version(Posix) {
 			if(c == Colour.none) {
 				stdout.writef("\033[1m%s\033[m", t);
