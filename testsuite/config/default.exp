@@ -1,0 +1,27 @@
+load_lib "standard.exp"
+
+proc dub_test { expectedTo test_name condition } {
+	global subdir;
+	try {cd $subdir;} on error {} {}
+
+	spawn dub test --nodeps --skip-registry=all -q -- --no-colours;
+
+	match_max 100000;
+	expect {
+		-re (e|E)rror.*$ {
+			fail "$test_name errored: $expect_out(buffer)";
+		}
+
+		-re $condition {
+			if { $expectedTo == "fail" } {
+				xfail "$test_name failed as expected";
+			} else {
+				pass "$test_name passed as expected";
+			}
+		}
+
+		default {
+			fail "$test_name produced wrong output or no output at all";
+		}
+	}
+}

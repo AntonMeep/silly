@@ -1,0 +1,15 @@
+{
+	"name": "basic",
+	"configurations": [
+		{
+			"name": "executable",
+			"targetType": "executable"
+		},
+		{
+			"name": "unittest",
+			"dependencies": {
+				"silly": {"path": "../../"}
+			}
+		}
+	]
+}
