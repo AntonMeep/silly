@@ -56,16 +56,29 @@ void executeUnitTests() {
 	size_t workerCount;
 	scheduler.start({
 		auto started = MonoTime.currTime;
-		static foreach(module_; __traits(getMember, dub_test_root, "allModules")) {
-			static foreach(test; __traits(getUnitTests, module_)) {
-				++workerCount;
-				spawn({
-					ownerTid.send(executeTest!test);
-				});
-			}
+		static foreach(m; __traits(getMember, dub_test_root, "allModules")) {
+			static if(__traits(compiles, __traits(getUnitTests, m))) {
+				static foreach(test; __traits(getUnitTests, m)) {
+					++workerCount;
+					spawn({
+						ownerTid.send(executeTest!test);
+					});
+				}
 
-			version(SillyDebug)
-				pragma(msg, "silly | Module ", fullyQualifiedName!module_.truncateName, " contains ", cast(int) __traits(getUnitTests, module_).length, " unittests");
+				version(SillyDebug)
+					pragma(msg, "silly | Module ", fullyQualifiedName!m.truncateName, " contains ", cast(int) __traits(getUnitTests, m).length, " unittests");
+			} else {
+				// For the rare cases when module contains member of the same name
+				static foreach(test; __traits(getUnitTests, __traits(parent, m))) {
+					++workerCount;
+					spawn({
+						ownerTid.send(executeTest!test);
+					});
+				}
+
+				version(SillyDebug)
+					pragma(msg, "silly | Module ", fullyQualifiedName!(__traits(parent, m)).truncateName, " contains ", cast(int) __traits(getUnitTests, __traits(parent, m)).length, " unittests");
+			}
 		}
 
 		Array!TestResult results;
