@@ -1,1 +1,3 @@
 .dub
+*.log
+*.sum

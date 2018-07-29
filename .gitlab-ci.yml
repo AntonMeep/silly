@@ -3,17 +3,30 @@ image: docker:stable
 services:
 - docker:dind
 
-dmd: &examples
+dmd-basic: &test
   variables:
     COMPILER: dmd
+    TOOL: basic
   stage: build
   script: docker run -v$(pwd):/source ohboi/mini$COMPILER bash -c "
     apt update -qq 2>&1 > /dev/null                     &&
     apt install -qq -y --no-install-recommends dejagnu  &&
-    cd testsuite                                        &&
-    runtest"
+    runtest --srcdir testsuite --tool=$TOOL"
 
-ldc:
-  <<: *examples
+ldc-basic:
+  <<: *test
   variables:
     COMPILER: ldc
+    TOOL: basic
+
+dmd-issue:
+  <<: *test
+  variables:
+    COMPILER: dmd
+    TOOL: issue
+
+ldc-issue:
+  <<: *test
+  variables:
+    COMPILER: ldc
+    TOOL: issue
