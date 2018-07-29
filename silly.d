@@ -57,7 +57,7 @@ void executeUnitTests() {
 	scheduler.start({
 		auto started = MonoTime.currTime;
 		static foreach(m; __traits(getMember, dub_test_root, "allModules")) {
-			static if(__traits(identifier, m).startsWith("module ") || __traits(identifier, m).startsWith("package ")) {
+			static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
 				static foreach(test; __traits(getUnitTests, m)) {
 					++workerCount;
 					spawn({
