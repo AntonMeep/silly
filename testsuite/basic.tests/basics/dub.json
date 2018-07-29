@@ -8,7 +8,7 @@
 		{
 			"name": "unittest",
 			"dependencies": {
-				"silly": {"path": "../../"}
+				"silly": {"path": "../../../"}
 			}
 		}
 	]
