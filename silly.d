@@ -56,8 +56,8 @@ void executeUnitTests() {
 	size_t workerCount;
 	scheduler.start({
 		auto started = MonoTime.currTime;
-		static foreach(m; __traits(getMember, dub_test_root, "allModules")) {
-			static foreach(test; __traits(getUnitTests, __traits(getMember, dub_test_root, __traits(identifier, m)))) {
+		static foreach(module_; __traits(getMember, dub_test_root, "allModules")) {
+			static foreach(test; __traits(getUnitTests, module_)) {
 				++workerCount;
 				spawn({
 					ownerTid.send(executeTest!test);
@@ -65,14 +65,7 @@ void executeUnitTests() {
 			}
 
 			version(SillyDebug)
-				pragma(msg, 
-					"silly | Module ",
-					fullyQualifiedName!(
-						__traits(getMember, dub_test_root, __traits(identifier, m))
-					).truncateName,
-					" contains ",
-					cast(int) __traits(getUnitTests,__traits(getMember, dub_test_root, __traits(identifier, m))).length,
-					" unittests");
+				pragma(msg, "silly | Module ", fullyQualifiedName!module_.truncateName, " contains ", cast(int) __traits(getUnitTests, module_).length, " unittests");
 		}
 
 		Array!TestResult results;
