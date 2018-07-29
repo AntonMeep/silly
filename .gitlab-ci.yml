@@ -11,7 +11,7 @@ dmd-basic: &test
   script: docker run -v$(pwd):/source ohboi/mini$COMPILER bash -c "
     apt update -qq 2>&1 > /dev/null                     &&
     apt install -qq -y --no-install-recommends dejagnu  &&
-    runtest --srcdir testsuite --tool=$TOOL"
+    cd testsuite && runtest --tool=$TOOL"
 
 ldc-basic:
   <<: *test
