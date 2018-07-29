@@ -2,7 +2,7 @@ load_lib "standard.exp"
 
 proc dub_test { expectedTo test_name condition } {
 	global subdir;
-	spawn dub test --nodeps --skip-registry=all -v --root=$subdir -- --no-colours;
+	spawn dub test --nodeps --skip-registry=all -q --root=$subdir -- --no-colours;
 
 	match_max 100000;
 	expect {
