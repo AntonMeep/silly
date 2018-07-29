@@ -69,6 +69,8 @@ void executeUnitTests() {
 					pragma(msg, "silly | Module ", fullyQualifiedName!m.truncateName, " contains ", cast(int) __traits(getUnitTests, m).length, " unittests");
 			} else {
 				// For the rare cases when module contains member of the same name
+				// This is an ugly fix (copy-pasta), but it works
+				// See issue #5 for more info
 				static foreach(test; __traits(getUnitTests, __traits(parent, m))) {
 					++workerCount;
 					spawn({
