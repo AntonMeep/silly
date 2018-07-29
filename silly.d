@@ -45,7 +45,7 @@ shared static this() {
 }
 
 void executeUnitTests() {
-	import std.algorithm : any, count;
+	import std.algorithm : any, count, startsWith;
 
 	static if(!__traits(compiles, () {static import dub_test_root;}))
 		static assert(false, "Couldn't find an entrypoint. Make sure you are running unittests with `dub test`");
@@ -57,7 +57,7 @@ void executeUnitTests() {
 	scheduler.start({
 		auto started = MonoTime.currTime;
 		static foreach(m; __traits(getMember, dub_test_root, "allModules")) {
-			static if(__traits(compiles, __traits(getUnitTests, m))) {
+			static if(__traits(identifier, m).startsWith("module ") || __traits(identifier, m).startsWith("package ")) {
 				static foreach(test; __traits(getUnitTests, m)) {
 					++workerCount;
 					spawn({
