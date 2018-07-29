@@ -1,0 +1,3 @@
+dub_test pass "Summary is ok"       "Summary: 0 passed, 1 failed";
+dub_test fail "test must fail"      "✗ issue_2 Throwing an exception with multi-line message";
+dub_test pass "multi-line message"  "      Hello,.*      World!"
