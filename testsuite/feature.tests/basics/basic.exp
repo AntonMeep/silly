@@ -1,9 +1,0 @@
-dub_test pass "Summary is ok"         "Summary: 3 passed, 3 failed";
-dub_test pass "basic.heavy"           "✓ basic.heavy Heavily utilizes single CPU core";
-dub_test fail "basic.multiline"       "✗ basic.multiline This unittest throws an exception with multi-line message";
-dub_test pass "basic.nameless #0"     "✓ basic.nameless __unittest_L.+_C.+";
-dub_test fail "basic.nameless #1"     "✗ basic.nameless __unittest_L.+_C.+";
-dub_test fail "basic.simple"          "✗ basic.simple Always failing test";
-dub_test pass "basic.simple"          "✓ basic.simple Always successful test";
-
-dub_run "basic builds and runs"       "Running main()";

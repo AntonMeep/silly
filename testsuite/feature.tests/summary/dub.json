@@ -1,5 +1,7 @@
 {
-	"name": "basic",
+	"name": "test",
+	"sourceFiles": ["test.d"],
+	"importPaths": ["."],
 	"configurations": [
 		{
 			"name": "executable",

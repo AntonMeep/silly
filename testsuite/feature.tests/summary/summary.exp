@@ -1,0 +1,10 @@
+set test_name "Summary";
+
+spawn dub test --nodeps --skip-registry=all -q --root=$subdir -- --no-colours;
+
+expect {
+	handle_errors
+	-ex "Summary: 10 passed, 10 failed"   { pass $test_name; } 
+	-re "Summary: \d+ passed, \d+ failed" { fail $test_name; } 
+	eof { fail $test_name; }
+}
