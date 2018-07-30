@@ -5,13 +5,13 @@ silly
 
 ## Why?
 
-Built-in unittest runner is not good enough. It does its job, but it doesn't show what tests were executed. It just runs them all stopping on the first failed one. Of course, community offers many different solutions for that problem, from small little tools for hobbyists to humongous frameworks. Still, these are either not good enough or *too* good.
+Built-in test runner is not good enough. It does its job, but it doesn't show what tests were executed. It just runs them all stopping on the first failed one. Of course, community offers many different solutions for that problem. Being an overcomplicated projects with thousands lines of code they could make you *less* productive increasing build times and deeply integrating into your project.
 
 **silly** is developed with strict principles in mind.
 
 ### Keep It Simple, Silly
 
-Just a general rule to not make things hard where it isn't necessary and eliminate places where it is necessary. 
+Find -> run -> report. That's all there is about test runners. It can't be simpler.
 
 ### Less code more better
 
@@ -27,22 +27,36 @@ You won't find anything besides the test runner here. It's not test runner's bus
 
 ### It just works
 
-Just add it as a dependency and that's it. No editing of your project's source code is required. No editing of `dub.json/dub.sdl` besides adding a dependency is required. No changes in your editor config or terminal aliases are required, **silly** just runs with
+Just add it as a dependency and that's it. No editing of your project's source code is required. No editing of `dub.json/dub.sdl` except for adding a dependency is required. No changes in your editor config or terminal aliases are required, **silly** just runs with
 ```
 $ dub test
 ```
 
 ### Your choice, your test runner
 
-It's up to you whether you want to use this test runner or not. Get rid of it just by removing the dependency.
-
-### Just for unit tests
-
-`unittest` blocks in D are meant (obviously) for unit testing. If somebody uses them for any other purposes like integration testing then they're doing it wrong and **silly** won't be helpful for these people. 
+It's up to you whether you want to use this test runner or not. Get rid of it just by removing the dependency. It won't break your CI/CD scripts and cause any trouble.
 
 ## Installation
 
 Just add **silly** as a dependency of your project and that's it.
+
+### dub.json
+
+```json
+{
+	<...>
+	"dependencies": {
+		"silly": "~>0.0.1"
+	}
+}
+```
+
+### dub.sdl
+
+```
+<...>
+dependency "silly" version="~>0.0.1"
+```
 
 ## Advanced configuration
 
