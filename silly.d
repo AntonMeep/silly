@@ -133,15 +133,13 @@ TestResult executeTest(alias test)() {
 	}
 
 	try {
+		scope(exit) ret.duration = MonoTime.currTime - started;
 		test();
-		ret.duration = MonoTime.currTime - started;
 		ret.succeed = true;
 	} catch(Exception e) {
 		trace(e);
 	} catch(AssertError a) {
 		trace(a);
-	} finally {
-		ret.duration = MonoTime.currTime - started;
 	}
 
 	return ret;
