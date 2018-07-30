@@ -5,7 +5,6 @@ version(unittest):
 import core.stdc.stdlib    : exit;
 import core.time           : Duration, MonoTime;
 import std.concurrency     : FiberScheduler, spawn, ownerTid, send, receiveOnly;
-import std.container.array : Array;
 import std.stdio           : stdout, writef, writeln, writefln;
 import std.traits          : fullyQualifiedName;
 
@@ -81,7 +80,7 @@ void executeUnitTests() {
 			}
 		}
 
-		Array!TestResult results;
+		TestResult[] results;
 		results.reserve(workerCount);
 
 		foreach(i; 0..workerCount)
@@ -163,12 +162,12 @@ struct Thrown {
 	immutable(string)[] info;
 }
 
-void listReporter(Array!TestResult results) {
+void listReporter(ref TestResult[] results) {
 	import core.time     : msecs;
 	import std.algorithm : sort, canFind;
 	import std.format    : format;
 	import std.string    : lastIndexOf, lineSplitter;
-	foreach(result; results[].sort!((a, b) => a.fullName < b.fullName)) {
+	foreach(result; results.sort!((a, b) => a.fullName < b.fullName)) {
 		result.succeed
 			? Console.write(" ✓ ", Colour.ok)
 			: Console.write(" ✗ ", Colour.achtung);
