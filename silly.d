@@ -115,6 +115,7 @@ void executeUnitTests() {
 }
 
 TestResult executeTest(alias test)() {
+	import core.exception : AssertError;
 	TestResult ret = {
 		fullName: fullyQualifiedName!test,
 		testName: getTestName!test,
@@ -122,14 +123,7 @@ TestResult executeTest(alias test)() {
 
 	auto started = MonoTime.currTime;
 
-	try {
-		test();
-		ret.duration = MonoTime.currTime - started;
-		ret.succeed = true;
-	} catch(Exception t) {
-		ret.duration = MonoTime.currTime - started;
-		ret.succeed = false;
-
+	void trace(Throwable t) {
 		foreach(th; t) {
 			immutable(string)[] trace;
 			foreach(i; th.info)
@@ -137,6 +131,18 @@ TestResult executeTest(alias test)() {
 
 			ret.thrown ~= Thrown(typeid(th).name, th.message.idup, th.file, th.line, trace);
 		}
+	}
+
+	try {
+		test();
+		ret.duration = MonoTime.currTime - started;
+		ret.succeed = true;
+	} catch(Exception e) {
+		trace(e);
+	} catch(AssertError a) {
+		trace(a);
+	} finally {
+		ret.duration = MonoTime.currTime - started;
 	}
 
 	return ret;
