@@ -45,7 +45,7 @@ shared static this() {
 }
 
 void executeUnitTests() {
-	import std.algorithm : any, count, startsWith;
+	import std.algorithm : any, count;
 
 	static if(!__traits(compiles, () {static import dub_test_root;}))
 		static assert(false, "Couldn't find an entrypoint. Make sure you are running unittests with `dub test`");
