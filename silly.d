@@ -192,17 +192,16 @@ void listReporter(ref TestResult[] results) {
 			foreach(line; th.message.lineSplitter)
 				"      ".writeln(line);
 
+			
+			writeln("    --- Stack trace ---");
 			if(Settings.fullStackTraces) {
-				writeln("    --- Stack trace ---");
 				foreach(line; th.info)
 					writeln("    ", line);
-				writeln("    -------------------");
 			} else {
-				writeln("    --- Stack trace ---");
 				for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
 					writeln("    ", th.info[i]);
-				writeln("    -------------------");
 			}
+			writeln("    -------------------");
 		}
 	}
 }
