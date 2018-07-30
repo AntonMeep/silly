@@ -1,15 +1,13 @@
 module basic.simple;
 
-import std.exception : enforce;
-
 enum hello = "Hello, world!";
 
 @("Always successful test")
 unittest {
-	enforce(hello == "Hello, world!");
+	assert(hello == "Hello, world!");
 }
 
 @("Always failing test")
 unittest {
-	enforce(hello == "Hello there!");
+	assert(hello == "Hello there!");
 }
