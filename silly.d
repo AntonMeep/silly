@@ -18,13 +18,16 @@ shared static this() {
 	with(args.getopt(
 		"no-colours",
 			"Disable colours",
-			(string option) { Settings.useColours = false; },
+			(string o) { Settings.useColours = false; },
 		"full-traces",
 			"Show full stack traces. By default traces are truncated",
 			&Settings.fullStackTraces,
 		"show-durations",
 			"Show durations for all unit tests. Default is false",
 			&Settings.showDurations,
+		"verbose",
+			"Show verbose output",
+			(string o) { Settings.verbose = Settings.fullStackTraces = Settings.showDurations = true; }
 	))
 		if(helpWanted) {
 			"Usage:\n\tdub test -- <options>\n\nOptions:".writefln;
@@ -209,6 +212,7 @@ static:
 	bool useColours      = true;
 	bool fullStackTraces = false;
 	bool showDurations   = false;
+	bool verbose         = false;
 }
 
 enum Colour {
@@ -266,7 +270,7 @@ string getTestName(alias test)() {
 
 string truncateName(string s) {
 	import std.string : indexOf;
-	if(s.length > 30) {
+	if(s.length > 30 && !Settings.verbose) {
 		auto i = s.indexOf('.', s.length - 30);
 		return s[i == -1 ? $-30 : i .. $];
 	}
