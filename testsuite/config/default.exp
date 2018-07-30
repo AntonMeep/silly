@@ -6,7 +6,7 @@ proc dub_test { expectedTo test_name condition } {
 
 	match_max 100000;
 	expect {
-		-re (e|E)rror.*$ {
+		-re (e|E)rror:.*$ {
 			fail "$test_name errored: $expect_out(buffer)";
 		}
 
