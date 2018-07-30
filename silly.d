@@ -66,7 +66,7 @@ void executeUnitTests() {
 				}
 
 				version(SillyDebug)
-					pragma(msg, "silly | Module ", fullyQualifiedName!m.truncateName, " contains ", cast(int) __traits(getUnitTests, m).length, " unittests");
+					pragma(msg, "silly | Module ", fullyQualifiedName!m, " contains ", cast(int) __traits(getUnitTests, m).length, " unittests");
 			} else {
 				// For the rare cases when module contains member of the same name
 				// This is an ugly fix (copy-pasta), but it works
@@ -79,7 +79,7 @@ void executeUnitTests() {
 				}
 
 				version(SillyDebug)
-					pragma(msg, "silly | Module ", fullyQualifiedName!(__traits(parent, m)).truncateName, " contains ", cast(int) __traits(getUnitTests, __traits(parent, m)).length, " unittests");
+					pragma(msg, "silly | Module ", fullyQualifiedName!(__traits(parent, m)), " contains ", cast(int) __traits(getUnitTests, __traits(parent, m)).length, " unittests");
 			}
 		}
 
@@ -265,10 +265,8 @@ string getTestName(alias test)() {
 
 string truncateName(string s) {
 	import std.string : indexOf;
-	if(s.length > 30 && !Settings.verbose) {
-		auto i = s.indexOf('.', s.length - 30);
-		return s[i == -1 ? $-30 : i .. $];
-	}
-
-	return s;
+	import std.algorithm : max;
+	return s.length > 30 && !Settings.verbose
+		? s[max(s.indexOf('.', s.length - 30), s.length - 30) .. $]
+		: s;
 }
