@@ -3,21 +3,21 @@ image: docker:stable
 services:
 - docker:dind
 
-dmd-basic: &test
+dmd-feature: &test
   variables:
     COMPILER: dmd
-    TOOL: basic
+    TOOL: feature
   stage: build
   script: docker run -v$(pwd):/source ohboi/mini$COMPILER bash -c "
     apt update -qq 2>&1 > /dev/null                     &&
     apt install -qq -y --no-install-recommends dejagnu  &&
     cd testsuite && runtest --tool=$TOOL"
 
-ldc-basic:
+ldc-feature:
   <<: *test
   variables:
     COMPILER: ldc
-    TOOL: basic
+    TOOL: feature
 
 dmd-issue:
   <<: *test
