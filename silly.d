@@ -172,8 +172,8 @@ void listReporter(ref TestResult[] results) {
 	import std.string    : lastIndexOf, lineSplitter;
 	foreach(result; results.sort!((a, b) => a.fullName < b.fullName)) {
 		result.succeed
-			? Console.write(" ✓ ", Colour.ok)
-			: Console.write(" ✗ ", Colour.achtung);
+			? Console.write(" ✓ ", Colour.ok, true)
+			: Console.write(" ✗ ", Colour.achtung, true);
 		
 		Console.write(result.fullName[0..result.fullName.lastIndexOf('.')].truncateName, Colour.none, true);
 		" %s".writef(result.testName);
@@ -241,10 +241,8 @@ static:
 			version(Posix) {
 				if(c == Colour.none && bright) {
 					stdout.writef("\033[1m%s\033[m", t);
-				} else if(bright) {
-					stdout.writef("\033[1;%dm%s\033[m", c, t);
 				} else {
-					stdout.writef("\033[0;%dm%s\033[m", c, t);
+					stdout.writef("\033[%d;%dm%s\033[m", bright, c, t);
 				}
 			} else {
 				stdout.write(t);
