@@ -4,11 +4,10 @@ version(unittest):
 
 import core.stdc.stdlib    : exit;
 import core.time           : Duration, MonoTime;
+import std.concurrency     : FiberScheduler, spawn, ownerTid, send, receiveOnly;
 import std.container.array : Array;
+import std.stdio           : stdout, writef, writeln, writefln;
 import std.traits          : fullyQualifiedName;
-
-import std.concurrency;
-import std.stdio;
 
 shared static this() {
 	import core.runtime : Runtime, UnitTestResult;
@@ -29,11 +28,11 @@ shared static this() {
 			&Settings.showDurations,
 	))
 		if(helpWanted) {
-			"Usage:\n\tdub test -- <options>\n\nOptions:".writeln;
+			"Usage:\n\tdub test -- <options>\n\nOptions:".writefln;
 
 			import std.string : leftJustifier;
 			foreach(option; options)
-				"  %s\t%s\t%s".writefln(option.optShort, option.optLong.leftJustifier(10), option.help);
+				"  %s\t%s\t%s\n".writef(option.optShort, option.optLong.leftJustifier(10), option.help);
 
 			exit(0);
 		}
@@ -52,9 +51,8 @@ void executeUnitTests() {
 
 	static import dub_test_root;
 
-	auto scheduler = new FiberScheduler;
 	size_t workerCount;
-	scheduler.start({
+	new FiberScheduler().start({
 		auto started = MonoTime.currTime;
 		static foreach(m; __traits(getMember, dub_test_root, "allModules")) {
 			static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
@@ -100,13 +98,13 @@ void executeUnitTests() {
 
 		writeln;
 		Console.write("Summary: ", Colour.none, true);
-		Console.write(passed, Colour.ok); " passed, ".write;
+		Console.write(passed, Colour.ok); " passed, ".writef;
 		if(failed) {
 			Console.write(failed, Colour.achtung);
 		} else {
-			failed.write;
+			"%d".writef(failed);
 		}
-		" failed in %d ms".writefln(totalDuration.total!"msecs");
+		" failed in %d ms\n".writef(totalDuration.total!"msecs");
 
 		foreach(result; results)
 			if(!result.succeed)
@@ -176,7 +174,7 @@ void listReporter(Array!TestResult results) {
 			: Console.write(" ✗ ", Colour.achtung);
 		
 		Console.write(result.fullName[0..result.fullName.lastIndexOf('.')].truncateName, Colour.none, true);
-		write(" ", result.testName);
+		" %s".writef(result.testName);
 
 		if(Settings.showDurations) {
 			" (%d ms)".writef(result.duration.total!"msecs");
