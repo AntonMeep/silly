@@ -2,11 +2,13 @@ module silly;
 
 version(unittest):
 
-import core.stdc.stdlib    : exit;
-import core.time           : Duration, MonoTime;
-import std.concurrency     : FiberScheduler, spawn, ownerTid, send, receiveOnly;
-import std.stdio           : stdout, writef, writeln, writefln;
-import std.traits          : fullyQualifiedName;
+import core.stdc.stdlib : exit;
+import core.time        : Duration, MonoTime, msecs;
+import std.algorithm    : any, canFind, count, max, sort;
+import std.concurrency  : FiberScheduler, spawn, ownerTid, send, receiveOnly;
+import std.stdio        : stdout, writef, writeln, writefln;
+import std.string       : indexOf, leftJustifier, lastIndexOf, lineSplitter;
+import std.traits       : fullyQualifiedName;
 
 shared static this() {
 	import core.runtime : Runtime, UnitTestResult;
@@ -32,7 +34,6 @@ shared static this() {
 		if(helpWanted) {
 			"Usage:\n\tdub test -- <options>\n\nOptions:".writefln;
 
-			import std.string : leftJustifier;
 			foreach(option; options)
 				"  %s\t%s\t%s\n".writef(option.optShort, option.optLong.leftJustifier(10), option.help);
 
@@ -46,8 +47,6 @@ shared static this() {
 }
 
 void executeUnitTests() {
-	import std.algorithm : any, count;
-
 	static if(!__traits(compiles, () {static import dub_test_root;}))
 		static assert(false, "Couldn't find an entrypoint. Make sure you are running unittests with `dub test`");
 
@@ -166,10 +165,7 @@ struct Thrown {
 }
 
 void listReporter(ref TestResult[] results) {
-	import core.time     : msecs;
-	import std.algorithm : sort, canFind;
-	import std.format    : format;
-	import std.string    : lastIndexOf, lineSplitter;
+	import std.format : format;
 	foreach(result; results.sort!((a, b) => a.fullName < b.fullName)) {
 		result.succeed
 			? Console.write(" ✓ ", Colour.ok, true)
@@ -264,8 +260,6 @@ string getTestName(alias test)() {
 }
 
 string truncateName(string s) {
-	import std.string : indexOf;
-	import std.algorithm : max;
 	return s.length > 30 && !Settings.verbose
 		? s[max(s.indexOf('.', s.length - 30), s.length - 30) .. $]
 		: s;
