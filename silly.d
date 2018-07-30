@@ -228,12 +228,11 @@ static:
 			version(Posix) {
 				import core.sys.posix.unistd;
 				Settings.useColours = isatty(STDOUT_FILENO) != 0;
-			} else {
-				Settings.useColours = false;
+				return;
 			}
-		} else {
-			Settings.useColours = false;
 		}
+		
+		Settings.useColours = false;
 	}
 
 	void write(T)(T t, Colour c = Colour.none, bool bright = false) {
@@ -244,12 +243,11 @@ static:
 				} else {
 					stdout.writef("\033[%d;%dm%s\033[m", bright, c, t);
 				}
-			} else {
-				stdout.write(t);
+				return;
 			}
-		} else {
-			stdout.write(t);
 		}
+		
+		stdout.write(t);
 	}
 }
 
