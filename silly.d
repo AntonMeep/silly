@@ -2,6 +2,11 @@ module silly;
 
 version(unittest):
 
+static if(!__traits(compiles, () {static import dub_test_root;}))
+	static assert(false, "silly | Couldn't find 'dub_test_root'. Make sure you are running tests with `dub test`");
+
+static import dub_test_root;
+
 import core.stdc.stdlib : exit;
 import core.time        : Duration, MonoTime, msecs;
 import std.algorithm    : any, canFind, count, max, sort;
@@ -47,11 +52,6 @@ shared static this() {
 }
 
 void executeUnitTests() {
-	static if(!__traits(compiles, () {static import dub_test_root;}))
-		static assert(false, "Couldn't find an entrypoint. Make sure you are running unittests with `dub test`");
-
-	static import dub_test_root;
-
 	size_t workerCount;
 	new FiberScheduler().start({
 		auto started = MonoTime.currTime;
