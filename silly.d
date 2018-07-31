@@ -100,9 +100,8 @@ void executeUnitTests() {
 		}
 		" failed in %d ms\n".writef(totalDuration.total!"msecs");
 
-		foreach(result; results)
-			if(!result.succeed)
-				exit(1);
+		if(failed)
+			exit(1);
 	});
 }
 
