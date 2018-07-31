@@ -86,17 +86,15 @@ void executeUnitTests() {
 
 		results.listReporter;
 
-		auto passed = results[].count!(a => a.succeed);
+		auto passed = results.count!(a => a.succeed);
 		auto failed = results.length - passed;
 
 		writeln;
 		Console.write("Summary: ", Colour.none, true);
-		Console.write(passed, Colour.ok); " passed, ".writef;
-		if(failed) {
-			Console.write(failed, Colour.achtung);
-		} else {
-			"%d".writef(failed);
-		}
+		Console.write(passed, Colour.ok);
+		" passed, ".writef;
+
+		Console.write(failed, failed ? Colour.achtung : Colour.none);
 		" failed in %d ms\n".writef(totalDuration.total!"msecs");
 
 		if(failed)
