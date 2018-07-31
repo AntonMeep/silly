@@ -21,8 +21,7 @@ shared static this() {
 
 	auto args = Runtime.args;
 
-	// That's kinda ugly, but it works and makes code shorter
-	with(args.getopt(
+	auto getoptResult = args.getopt(
 		"no-colours",
 			"Disable colours",
 			(string o) { Settings.useColours = false; },
@@ -35,15 +34,16 @@ shared static this() {
 		"verbose",
 			"Show verbose output",
 			(string o) { Settings.verbose = Settings.fullStackTraces = Settings.showDurations = true; }
-	))
-		if(helpWanted) {
-			"Usage:\n\tdub test -- <options>\n\nOptions:".writefln;
+	);
 
-			foreach(option; options)
-				"  %s\t%s\t%s\n".writef(option.optShort, option.optLong.leftJustifier(10), option.help);
+	if(getoptResult.helpWanted) {
+		"Usage:\n\tdub test -- <options>\n\nOptions:".writefln;
 
-			exit(0);
-		}
+		foreach(option; getoptResult.options)
+			"  %s\t%s\t%s\n".writef(option.optShort, option.optLong.leftJustifier(10), option.help);
+
+		exit(0);
+	}
 
 	Runtime.extendedModuleUnitTester = () {
 		executeUnitTests;
