@@ -11,6 +11,7 @@ import core.stdc.stdlib : exit;
 import core.time        : Duration, MonoTime, msecs;
 import std.algorithm    : any, canFind, count, max, sort;
 import std.concurrency  : FiberScheduler, spawn, ownerTid, send, receiveOnly;
+import std.meta         : Alias;
 import std.stdio        : stdout, writef, writeln, writefln;
 import std.string       : indexOf, leftJustifier, lastIndexOf, lineSplitter;
 import std.traits       : fullyQualifiedName;
@@ -57,29 +58,21 @@ void executeUnitTests() {
 		auto started = MonoTime.currTime;
 		static foreach(m; dub_test_root.allModules) {
 			static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
-				static foreach(test; __traits(getUnitTests, m)) {
-					++workerCount;
-					spawn({
-						ownerTid.send(executeTest!test);
-					});
-				}
-
-				version(SillyDebug)
-					pragma(msg, "silly | Module ", fullyQualifiedName!m, " contains ", cast(int) __traits(getUnitTests, m).length, " unittests");
+				alias module_ = m;
 			} else {
-				// For the rare cases when module contains member of the same name
-				// This is an ugly fix (copy-pasta), but it works
-				// See issue #5 for more info
-				static foreach(test; __traits(getUnitTests, __traits(parent, m))) {
-					++workerCount;
-					spawn({
-						ownerTid.send(executeTest!test);
-					});
-				}
-
-				version(SillyDebug)
-					pragma(msg, "silly | Module ", fullyQualifiedName!(__traits(parent, m)), " contains ", cast(int) __traits(getUnitTests, __traits(parent, m)).length, " unittests");
+				// For cases when module contains member of the same name
+				alias module_ = Alias!(__traits(parent, m));
 			}
+
+			static foreach(test; __traits(getUnitTests, module_)) {
+				++workerCount;
+				spawn({
+					ownerTid.send(executeTest!test);
+				});
+			}
+
+			version(SillyDebug)
+				pragma(msg, "silly | Module ", fullyQualifiedName!module_, " contains ", cast(int) __traits(getUnitTests, module_).length, " unittests");
 		}
 
 		TestResult[] results;
