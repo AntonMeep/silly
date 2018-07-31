@@ -75,11 +75,10 @@ void executeUnitTests() {
 				pragma(msg, "silly | Module ", fullyQualifiedName!module_, " contains ", cast(int) __traits(getUnitTests, module_).length, " unittests");
 		}
 
-		TestResult[] results;
-		results.reserve(workerCount);
+		TestResult[] results = new TestResult[workerCount];
 
 		foreach(i; 0..workerCount)
-			results ~= receiveOnly!TestResult;
+			results[i] = receiveOnly!TestResult;
 
 		auto totalDuration = MonoTime.currTime - started;
 
