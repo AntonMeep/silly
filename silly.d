@@ -104,10 +104,7 @@ void executeUnitTests() {
 
 TestResult executeTest(alias test)() {
 	import core.exception : AssertError;
-	TestResult ret = {
-		fullName: fullyQualifiedName!test,
-		testName: getTestName!test,
-	};
+	auto ret = TestResult(fullyQualifiedName!test, getTestName!test);
 
 	auto started = MonoTime.currTime;
 
@@ -135,8 +132,8 @@ TestResult executeTest(alias test)() {
 }
 
 struct TestResult {
-	string fullName;
-	string testName;
+	string fullName,
+		   testName;
 	bool succeed;
 	Duration duration;
 
@@ -144,9 +141,9 @@ struct TestResult {
 }
 
 struct Thrown {
-	string type;
-	string message;
-	string file;
+	string type,
+		   message,
+		   file;
 	size_t line;
 	immutable(string)[] info;
 }
@@ -192,9 +189,9 @@ void listReporter(ref TestResult[] results) {
 static struct Settings {
 static:
 	bool useColours      = true;
-	bool fullStackTraces = false;
-	bool showDurations   = false;
-	bool verbose         = false;
+	bool fullStackTraces,
+		 showDurations,
+		 verbose;
 }
 
 enum Colour {
