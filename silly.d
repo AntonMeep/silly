@@ -55,7 +55,7 @@ void executeUnitTests() {
 	size_t workerCount;
 	new FiberScheduler().start({
 		auto started = MonoTime.currTime;
-		static foreach(m; __traits(getMember, dub_test_root, "allModules")) {
+		static foreach(m; dub_test_root.allModules) {
 			static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
 				static foreach(test; __traits(getUnitTests, m)) {
 					++workerCount;
