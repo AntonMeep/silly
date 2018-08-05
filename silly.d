@@ -72,6 +72,18 @@ void executeUnitTests() {
 				});
 			}
 
+			static foreach(member; __traits(derivedMembers, module_)) {
+				static if(__traits(compiles, __traits(parent, __traits(getMember, module_, member)))        &&
+						  __traits(isSame, __traits(parent, __traits(getMember, module_, member)), module_)) {
+					static foreach(test; __traits(getUnitTests, __traits(getMember, module_, member))) {
+						++workerCount;
+						spawn({
+							ownerTid.send(executeTest!test);
+						});
+					}
+				}
+			}
+
 			version(SillyDebug)
 				pragma(msg, "silly | Module ", fullyQualifiedName!module_, " contains ", cast(int) __traits(getUnitTests, module_).length, " unittests");
 		}
