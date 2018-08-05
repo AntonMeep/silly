@@ -1,0 +1,2 @@
+dub_test pass "Summary is ok"  "Summary: 1 passed, 0 failed";
+dub_test pass "Test is ok"     "✓ issue_10.S Hello";

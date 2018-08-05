@@ -1,0 +1,17 @@
+{
+	"name": "issue_10",
+	"sourceFiles": ["issue_10.d"],
+	"importPaths": ["."],
+	"configurations": [
+		{
+			"name": "executable",
+			"targetType": "executable"
+		},
+		{
+			"name": "unittest",
+			"dependencies": {
+				"silly": {"path": "../../../"}
+			}
+		}
+	]
+}
