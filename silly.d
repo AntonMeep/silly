@@ -42,7 +42,7 @@ shared static this() {
 		"Usage:\n\tdub test -- <options>\n\nOptions:".writefln;
 
 		foreach(option; getoptResult.options)
-			"  %s\t%s\t%s\n".writef(option.optShort, option.optLong.leftJustifier(10), option.help);
+			"  %s\t%s\t%s\n".writef(option.optShort, option.optLong.leftJustifier(20), option.help);
 
 		exit(0);
 	}
