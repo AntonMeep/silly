@@ -11,9 +11,6 @@
 			"name": "unittest",
 			"dependencies": {
 				"silly": {"path": "../../../"}
-			},
-			"subConfigurations": {
-				"silly": "debug"
 			}
 		}
 	]

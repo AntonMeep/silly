@@ -1,3 +1,2 @@
 dub_test pass "Summary is ok"           "Summary: 1 passed, 0 failed";
 dub_test pass "issue_5 test"            "✓ issue_5 __unittest_L.+_C.+";
-dub_test pass "correct number of tests" "silly | Module issue_5 contains 1 unittest"
