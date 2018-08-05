@@ -57,7 +57,3 @@ Just add **silly** as a dependency of your project and that's it.
 <...>
 dependency "silly" version="~>0.0.1"
 ```
-
-## Advanced configuration
-
-There's `debug` configuration that can be used to show additional information during compilation.

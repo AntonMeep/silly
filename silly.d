@@ -83,9 +83,6 @@ void executeUnitTests() {
 					}
 				}
 			}
-
-			version(SillyDebug)
-				pragma(msg, "silly | Module ", fullyQualifiedName!module_, " contains ", cast(int) __traits(getUnitTests, module_).length, " unittests");
 		}
 
 		TestResult[] results = new TestResult[workerCount];

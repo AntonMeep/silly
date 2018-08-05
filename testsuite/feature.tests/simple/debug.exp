@@ -1,9 +1,0 @@
-set test_name "Debug configuration";
-
-spawn dub test --nodeps --skip-registry=all -q --root=$subdir --override-config=silly/debug -- --no-colours;
-
-expect {
-	handle_errors
-	-ex "silly | Module test contains 20 unittests" { pass $test_name; }
-	eof { fail $test_name; }
-}
