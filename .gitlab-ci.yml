@@ -9,8 +9,8 @@ dmd-feature: &test
     TOOL: feature
   stage: build
   script: docker run -v$(pwd):/source ohboi/mini$COMPILER bash -c "
-    apt update -qq 2>&1 > /dev/null                     &&
-    apt install -qq -y --no-install-recommends dejagnu  &&
+    apt-get update -qq 2>&1 > /dev/null                     &&
+    apt-get install -qq -y --no-install-recommends dejagnu  &&
     cd testsuite && runtest --tool=$TOOL"
 
 ldc-feature:
