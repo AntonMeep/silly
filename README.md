@@ -1,4 +1,6 @@
-silly [![Repository](https://img.shields.io/badge/repository-on%20GitLab-orange.svg)](https://gitlab.com/ohboi/silly) [![Lines of code](https://ohboi.gitlab.io/silly/loc.svg)](https://gitlab.com/ohboi/silly/blob/master/silly.d) [![pipeline status](https://gitlab.com/ohboi/silly/badges/master/pipeline.svg)](https://gitlab.com/ohboi/silly/commits/master)
+silly [![Repository](https://img.shields.io/badge/repository-on%20GitLab-orange.svg)](https://gitlab.com/ohboi/silly) [![Lines of code](https://ohboi.gitlab.io/silly/loc.svg)](https://gitlab.com/ohboi/silly/blob/master/silly.d) [![pipeline status](https://gitlab.com/ohboi/silly/badges/master/pipeline.svg)](https://gitlab.com/ohboi/silly/commits/master) [![MIT Licence](https://img.shields.io/badge/licence-MIT-blue.svg)](https://gitlab.com/ohboi/silly/blob/master/LICENCE) 
+[![Package version](https://img.shields.io/dub/v/silly.svg)](https://gitlab.com/ohboi/silly/tags)
+
 =====
 
 **silly** is a no-nonsense test runner for the D programming language. Instead of re-inventing the wheel and adding more and more levels of abstraction it just works, requiring as little effort from the programmer as possible.
