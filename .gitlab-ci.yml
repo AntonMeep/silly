@@ -32,13 +32,9 @@ ldc-issue:
     TOOL: issue
 
 pages:
+  image: alpine
   script:
     - cp -r pages/public public
-    - docker run -v$(pwd):/source ohboi/minidmd bash -c "
-     dub fetch dscanner &&
-      export LOC=\$(dub run dscanner -q -- --sloc silly.d | sed -e 's/.*:\t//' | head -n1) &&
-      echo silly.d contains just \$LOC lines of code &&
-      cat misc/loc.svg | sed s/%s/\$LOC/ > public/loc.svg"
   artifacts:
     paths:
       - public/
