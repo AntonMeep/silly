@@ -57,7 +57,7 @@ void executeUnitTests() {
 	size_t workerCount;
 	new FiberScheduler().start({
 		auto started = MonoTime.currTime;
-		static foreach(m; dub_test_root.allModules) {
+		foreach(m; dub_test_root.allModules) {
 			static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
 				alias module_ = m;
 			} else {

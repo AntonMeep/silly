@@ -31,17 +31,23 @@ ldc-issue:
     COMPILER: ldc
     TOOL: issue
 
+# loc:
+#   script: docker run -v$(pwd):/source ohboi/minidmd bash -c "
+#     dub fetch dscanner &&
+#     mkdir public &&
+#     export LOC=\$(dub run dscanner -q -- --sloc silly.d | sed -e 's/.*:\t//' | head -n1) &&
+#     echo silly.d contains just \$LOC lines of code &&
+#     cat misc/loc.svg | sed s/%s/\$LOC/ > loc.svg"
+#   artifacts:
+#     paths:
+#       - loc.svg
+
 pages:
-  script: docker run -v$(pwd):/source ohboi/minidmd bash -c "
-    dub fetch dscanner &&
-    mkdir public &&
-    export LOC=\$(dub run dscanner -q -- --sloc silly.d | sed -e 's/.*:\t//' | head -n1) &&
-    echo silly.d contains just \$LOC lines of code &&
-    cat misc/loc.svg | sed s/%s/\$LOC/ > public/loc.svg"
+  script: cp -r pages/public public
   artifacts:
     paths:
       - public/
-  only:
-    - /^v\d+\.\d+\.\d+.*$/
-  except:
-    - branches
+  # only:
+  #   - /^v\d+\.\d+\.\d+.*$/
+  # except:
+  #   - branches
