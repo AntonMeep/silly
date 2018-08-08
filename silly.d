@@ -22,127 +22,129 @@ shared static this() {
 	import core.runtime : Runtime, UnitTestResult;
 	import std.getopt : getopt;
 
-	auto args = Runtime.args;
-
-	auto getoptResult = args.getopt(
-		"no-colours",
-			"Disable colours",
-			(string o) { Settings.useColours = false; },
-		"full-traces",
-			"Show full stack traces. By default traces are truncated",
-			&Settings.fullStackTraces,
-		"show-durations",
-			"Show durations for all unit tests. Default is false",
-			&Settings.showDurations,
-		"verbose",
-			"Show verbose output",
-			(string o) { Settings.verbose = Settings.fullStackTraces = Settings.showDurations = true; }
-	);
-
-	if(getoptResult.helpWanted) {
-		"Usage:\n\tdub test -- <options>\n\nOptions:".writefln;
-
-		foreach(option; getoptResult.options)
-			"  %s\t%s\t%s\n".writef(option.optShort, option.optLong.leftJustifier(20), option.help);
-
-		exit(0);
-	}
-
 	Runtime.extendedModuleUnitTester = () {
-		executeUnitTests;
-		return UnitTestResult(0,0,false,false);
-	};
-}
+		bool fullStackTraces, showDurations, verbose;
 
-void executeUnitTests() {
-	new FiberScheduler().start({
+		auto args = Runtime.args;
+		auto getoptResult = args.getopt(
+			"no-colours",
+				"Disable colours",
+				(string o) { useColours = false; },
+			"full-traces",
+				"Show full stack traces. By default traces are truncated",
+				&fullStackTraces,
+			"show-durations",
+				"Show durations for all unit tests. Default is false",
+				&showDurations,
+			"verbose",
+				"Show verbose output",
+				(string o) { verbose = fullStackTraces = showDurations = true; }
+		);
+
+		if(getoptResult.helpWanted) {
+			"Usage:\n\tdub test -- <options>\n\nOptions:".writefln;
+
+			foreach(option; getoptResult.options)
+				"  %s\t%s\t%s\n".writef(option.optShort, option.optLong.leftJustifier(20), option.help);
+
+			exit(0);
+		}
+
 		Console.init;
-		size_t workerCount, passed, failed;
 
+		new FiberScheduler().start({
+			size_t workerCount, passed, failed;
 
-		foreach(m; dub_test_root.allModules) {
-			static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
-				alias module_ = m;
-			} else {
-				// For cases when module contains member of the same name
-				alias module_ = Alias!(__traits(parent, m));
-			}
+			// Test discovery
+			foreach(m; dub_test_root.allModules) {
+				static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
+					alias module_ = m;
+				} else {
+					// For cases when module contains member of the same name
+					alias module_ = Alias!(__traits(parent, m));
+				}
 
-			static foreach(test; __traits(getUnitTests, module_)) {
-				++workerCount;
-				spawn({
-					ownerTid.send(executeTest!test);
-				});
-			}
+				// Unittests in the module
+				static foreach(test; __traits(getUnitTests, module_)) {
+					++workerCount;
+					spawn({
+						ownerTid.send(executeTest!test);
+					});
+				}
 
-			static foreach(member; __traits(derivedMembers, module_)) {
-				static if(__traits(compiles, __traits(parent, __traits(getMember, module_, member)))        &&
-						  __traits(isSame, __traits(parent, __traits(getMember, module_, member)), module_)) {
-					static foreach(test; __traits(getUnitTests, __traits(getMember, module_, member))) {
-						++workerCount;
-						spawn({
-							ownerTid.send(executeTest!test);
-						});
+				// Unittests in structs and classes
+				static foreach(member; __traits(derivedMembers, module_)) {
+					static if(__traits(compiles, __traits(parent, __traits(getMember, module_, member))) &&
+							  __traits(isSame, __traits(parent, __traits(getMember, module_, member)), module_)) {
+						static foreach(test; __traits(getUnitTests, __traits(getMember, module_, member))) {
+							++workerCount;
+							spawn({
+								ownerTid.send(executeTest!test);
+							});
+						}
 					}
 				}
 			}
-		}
 
-		Duration totalDuration;
-		foreach(unused; 0..workerCount) {
-			auto result = receiveOnly!TestResult;
+			// Result reporter
+			Duration totalDuration;
+			foreach(unused; 0..workerCount) {
+				auto result = receiveOnly!TestResult;
 
-			totalDuration += result.duration;
+				totalDuration += result.duration;
 
-			if(result.succeed) {
-				Console.write(" ✓ ", Colour.ok, true);
-				++passed;
-			} else {
-				Console.write(" ✗ ", Colour.achtung, true);
-				++failed;
-			}
-			
-			Console.write(result.fullName[0..result.fullName.lastIndexOf('.')].truncateName, Colour.none, true);
-			" %s".writef(result.testName);
+				if(result.succeed) {
+					Console.write(" ✓ ", Colour.ok, true);
+					++passed;
+				} else {
+					Console.write(" ✗ ", Colour.achtung, true);
+					++failed;
+				}
+				
+				Console.write(result.fullName[0..result.fullName.lastIndexOf('.')].truncateName(verbose), Colour.none, true);
+				" %s".writef(result.testName);
 
-			if(Settings.showDurations) {
-				" (%d ms)".writef(result.duration.total!"msecs");
-			} else if(result.duration >= 100.msecs) {
-				Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
+				if(showDurations) {
+					" (%d ms)".writef(result.duration.total!"msecs");
+				} else if(result.duration >= 100.msecs) {
+					Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
+				}
+
+				writeln;
+
+				foreach(th; result.thrown) {
+					"    %s has been thrown from %s:%d with the following message:"
+						.writefln(th.type, th.file, th.line);
+					foreach(line; th.message.lineSplitter)
+						"      ".writeln(line);
+
+					
+					writeln("    --- Stack trace ---");
+					if(fullStackTraces) {
+						foreach(line; th.info)
+							writeln("    ", line);
+					} else {
+						for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
+							writeln("    ", th.info[i]);
+					}
+					writeln("    -------------------");
+				}
 			}
 
 			writeln;
+			Console.write("Summary: ", Colour.none, true);
+			Console.write(passed, Colour.ok);
+			" passed, ".writef;
 
-			foreach(th; result.thrown) {
-				"    %s has been thrown from %s:%d with the following message:"
-					.writefln(th.type, th.file, th.line);
-				foreach(line; th.message.lineSplitter)
-					"      ".writeln(line);
+			Console.write(failed, failed ? Colour.achtung : Colour.none);
+			" failed in %d ms\n".writef(totalDuration.total!"msecs");
 
-				
-				writeln("    --- Stack trace ---");
-				if(Settings.fullStackTraces) {
-					foreach(line; th.info)
-						writeln("    ", line);
-				} else {
-					for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
-						writeln("    ", th.info[i]);
-				}
-				writeln("    -------------------");
-			}
-		}
+			if(failed)
+				exit(1);
+		});
 
-		writeln;
-		Console.write("Summary: ", Colour.none, true);
-		Console.write(passed, Colour.ok);
-		" passed, ".writef;
-
-		Console.write(failed, failed ? Colour.achtung : Colour.none);
-		" failed in %d ms\n".writef(totalDuration.total!"msecs");
-
-		if(failed)
-			exit(1);
-	});
+		return UnitTestResult(0,0,false,false);
+	};
 }
 
 TestResult executeTest(alias test)() {
@@ -191,13 +193,7 @@ struct Thrown {
 	immutable(string)[] info;
 }
 
-static struct Settings {
-static:
-	bool useColours      = true;
-	bool fullStackTraces,
-		 showDurations,
-		 verbose;
-}
+static bool useColours = true;
 
 enum Colour {
 	none,
@@ -207,21 +203,20 @@ enum Colour {
 }
 
 static struct Console {
-static:
-	void init() {
-		if(Settings.useColours) {
+	static void init() {
+		if(useColours) {
 			version(Posix) {
 				import core.sys.posix.unistd;
-				Settings.useColours = isatty(STDOUT_FILENO) != 0;
+				useColours = isatty(STDOUT_FILENO) != 0;
 				return;
 			}
 		}
-		
-		Settings.useColours = false;
+
+		useColours = false;
 	}
 
-	void write(T)(T t, Colour c = Colour.none, bool bright = false) {
-		if(Settings.useColours) {
+	static void write(T)(T t, Colour c = Colour.none, bool bright = false) {
+		if(useColours) {
 			version(Posix) {
 				if(c == Colour.none && bright) {
 					stdout.writef("\033[1m%s\033[m", t);
@@ -248,8 +243,8 @@ string getTestName(alias test)() {
 	done: return name;
 }
 
-string truncateName(string s) {
-	return s.length > 30 && !Settings.verbose
+string truncateName(string s, bool verbose = false) {
+	return s.length > 30 && !verbose
 		? s[max(s.indexOf('.', s.length - 30), s.length - 30) .. $]
 		: s;
 }
