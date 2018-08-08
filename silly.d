@@ -10,8 +10,9 @@ static if(!__traits(compiles, () {static import dub_test_root;})) {
 
 import core.stdc.stdlib : exit;
 import core.time        : Duration, MonoTime, msecs;
-import std.algorithm    : any, canFind, count, max, sort;
+import std.algorithm    : any, canFind, count, max;
 import std.concurrency  : FiberScheduler, spawn, ownerTid, send, receiveOnly;
+import std.format       : format;
 import std.meta         : Alias;
 import std.stdio        : stdout, writef, writeln, writefln;
 import std.string       : indexOf, leftJustifier, lastIndexOf, lineSplitter;
@@ -54,9 +55,11 @@ shared static this() {
 }
 
 void executeUnitTests() {
-	size_t workerCount;
 	new FiberScheduler().start({
-		auto started = MonoTime.currTime;
+		Console.init;
+		size_t workerCount, passed, failed;
+
+
 		foreach(m; dub_test_root.allModules) {
 			static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
 				alias module_ = m;
@@ -85,19 +88,49 @@ void executeUnitTests() {
 			}
 		}
 
-		TestResult[] results = new TestResult[workerCount];
+		Duration totalDuration;
+		foreach(unused; 0..workerCount) {
+			auto result = receiveOnly!TestResult;
 
-		foreach(i; 0..workerCount)
-			results[i] = receiveOnly!TestResult;
+			totalDuration += result.duration;
 
-		auto totalDuration = MonoTime.currTime - started;
+			if(result.succeed) {
+				Console.write(" ✓ ", Colour.ok, true);
+				++passed;
+			} else {
+				Console.write(" ✗ ", Colour.achtung, true);
+				++failed;
+			}
+			
+			Console.write(result.fullName[0..result.fullName.lastIndexOf('.')].truncateName, Colour.none, true);
+			" %s".writef(result.testName);
 
-		Console.init;
+			if(Settings.showDurations) {
+				" (%d ms)".writef(result.duration.total!"msecs");
+			} else if(result.duration >= 100.msecs) {
+				Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
+			}
 
-		results.listReporter;
+			writeln;
 
-		auto passed = results.count!(a => a.succeed);
-		auto failed = results.length - passed;
+			foreach(th; result.thrown) {
+				"    %s has been thrown from %s:%d with the following message:"
+					.writefln(th.type, th.file, th.line);
+				foreach(line; th.message.lineSplitter)
+					"      ".writeln(line);
+
+				
+				writeln("    --- Stack trace ---");
+				if(Settings.fullStackTraces) {
+					foreach(line; th.info)
+						writeln("    ", line);
+				} else {
+					for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
+						writeln("    ", th.info[i]);
+				}
+				writeln("    -------------------");
+			}
+		}
 
 		writeln;
 		Console.write("Summary: ", Colour.none, true);
@@ -156,44 +189,6 @@ struct Thrown {
 		   file;
 	size_t line;
 	immutable(string)[] info;
-}
-
-void listReporter(ref TestResult[] results) {
-	import std.format : format;
-	foreach(result; results.sort!((a, b) => a.fullName < b.fullName)) {
-		result.succeed
-			? Console.write(" ✓ ", Colour.ok, true)
-			: Console.write(" ✗ ", Colour.achtung, true);
-		
-		Console.write(result.fullName[0..result.fullName.lastIndexOf('.')].truncateName, Colour.none, true);
-		" %s".writef(result.testName);
-
-		if(Settings.showDurations) {
-			" (%d ms)".writef(result.duration.total!"msecs");
-		} else if(result.duration >= 100.msecs) {
-			Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
-		}
-
-		writeln;
-
-		foreach(th; result.thrown) {
-			"    %s has been thrown from %s:%d with the following message:"
-				.writefln(th.type, th.file, th.line);
-			foreach(line; th.message.lineSplitter)
-				"      ".writeln(line);
-
-			
-			writeln("    --- Stack trace ---");
-			if(Settings.fullStackTraces) {
-				foreach(line; th.info)
-					writeln("    ", line);
-			} else {
-				for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
-					writeln("    ", th.info[i]);
-			}
-			writeln("    -------------------");
-		}
-	}
 }
 
 static struct Settings {
