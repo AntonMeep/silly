@@ -1,5 +1,4 @@
-silly [![Repository](https://img.shields.io/badge/repository-on%20GitLab-orange.svg)](https://gitlab.com/ohboi/silly) [![pipeline status](https://gitlab.com/ohboi/silly/badges/master/pipeline.svg)](https://gitlab.com/ohboi/silly/commits/master) [![MIT Licence](https://img.shields.io/badge/licence-MIT-blue.svg)](https://gitlab.com/ohboi/silly/blob/master/LICENCE) 
-[![Package version](https://img.shields.io/dub/v/silly.svg)](https://gitlab.com/ohboi/silly/tags)
+silly [![Repository](https://img.shields.io/badge/repository-on%20GitLab-orange.svg)](https://gitlab.com/ohboi/silly) [![pipeline status](https://gitlab.com/ohboi/silly/badges/master/pipeline.svg)](https://gitlab.com/ohboi/silly/commits/master) [![MIT Licence](https://img.shields.io/badge/licence-MIT-blue.svg)](https://gitlab.com/ohboi/silly/blob/master/LICENCE) [![Package version](https://img.shields.io/dub/v/silly.svg)](https://gitlab.com/ohboi/silly/tags)
 
 =====
 
