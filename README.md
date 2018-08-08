@@ -6,6 +6,8 @@ silly [![Repository](https://img.shields.io/badge/repository-on%20GitLab-orange.
 > Note that project's development happens on the [GitLab](https://gitlab.com/ohboi/silly).
 > GitHub repository is a mirror, it might *not* always be up-to-date.
 
+Make sure to check out project's [homepage](https://ohboi.gitlab.io/silly/) for more information about installation and usage.
+
 ## Why?
 
 Built-in test runner is not good enough. It does its job, but it doesn't show what tests were executed. It just runs them all stopping on the first failed one. Of course, community offers many different solutions for that problem. Being an overcomplicated projects with thousands lines of code they could make you *less* productive increasing build times and deeply integrating into your project.
