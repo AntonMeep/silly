@@ -75,7 +75,8 @@ shared static this() {
 				// Unittests in structs and classes
 				static foreach(member; __traits(derivedMembers, module_)) {
 					static if(__traits(compiles, __traits(parent, __traits(getMember, module_, member))) &&
-							  __traits(isSame, __traits(parent, __traits(getMember, module_, member)), module_)) {
+							  __traits(isSame, __traits(parent, __traits(getMember, module_, member)), module_) &&
+							  __traits(compiles, __traits(getUnitTests, __traits(getMember, module_, member)))) {
 						static foreach(test; __traits(getUnitTests, __traits(getMember, module_, member))) {
 							++workerCount;
 							spawn({
