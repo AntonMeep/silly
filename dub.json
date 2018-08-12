@@ -1,6 +1,6 @@
 {
 	"name": "silly",
-	"description": "",
+	"description": "Better test runner for D",
 	"authors": [
 		"Anton Fediushin"
 	],
