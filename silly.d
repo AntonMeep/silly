@@ -8,7 +8,6 @@ static if(!__traits(compiles, () {static import dub_test_root;})) {
 	static import dub_test_root;
 }
 
-import core.stdc.stdlib : exit;
 import core.time        : Duration, MonoTime, msecs;
 import std.algorithm    : any, canFind, count, max;
 import std.concurrency  : FiberScheduler, spawn, ownerTid, send, receiveOnly;
@@ -23,6 +22,7 @@ shared static this() {
 	import std.getopt : getopt;
 
 	Runtime.extendedModuleUnitTester = () {
+		size_t workerCount, passed, failed;
 		bool fullStackTraces, showDurations, verbose;
 
 		auto args = Runtime.args;
@@ -47,14 +47,12 @@ shared static this() {
 			foreach(option; getoptResult.options)
 				"  %s\t%s\t%s\n".writef(option.optShort, option.optLong.leftJustifier(20), option.help);
 
-			exit(0);
+			return UnitTestResult(0, 0, false, false);
 		}
 
 		Console.init;
 
 		new FiberScheduler().start({
-			size_t workerCount, passed, failed;
-
 			// Test discovery
 			foreach(m; dub_test_root.allModules) {
 				static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
@@ -139,12 +137,9 @@ shared static this() {
 
 			Console.write(failed, failed ? Colour.achtung : Colour.none);
 			" failed in %d ms\n".writef(totalDuration.total!"msecs");
-
-			if(failed)
-				exit(1);
 		});
 
-		return UnitTestResult(0,0,false,false);
+		return UnitTestResult(passed + failed, passed, false, false);
 	};
 }
 
