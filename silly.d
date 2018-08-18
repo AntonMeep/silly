@@ -10,7 +10,7 @@ static if(!__traits(compiles, () {static import dub_test_root;})) {
 
 import core.time        : Duration, MonoTime, msecs;
 import std.algorithm    : any, canFind, count, max;
-import std.parallelism  : taskPool;
+import std.parallelism  : taskPool, totalCPUs, defaultPoolThreads;
 import std.format       : format;
 import std.meta         : Alias;
 import std.stdio        : stdout, writef, writeln, writefln;
@@ -22,8 +22,9 @@ shared static this() {
 	import std.getopt : getopt;
 
 	Runtime.extendedModuleUnitTester = () {
-		size_t passed, failed;
 		bool fullStackTraces, showDurations, verbose;
+		size_t passed, failed;
+		uint threads = totalCPUs - 1;
 
 		auto args = Runtime.args;
 		auto getoptResult = args.getopt(
@@ -36,6 +37,9 @@ shared static this() {
 			"show-durations",
 				"Show durations for all unit tests. Default is false",
 				&showDurations,
+			"threads",
+				"Number of threads to use. 1 to run in single thread",
+				&threads,
 			"verbose",
 				"Show verbose output",
 				(string o) { verbose = fullStackTraces = showDurations = true; }
@@ -82,9 +86,10 @@ shared static this() {
 		// Result reporter
 		Duration totalDuration;
 
-		auto results = taskPool.amap!executeTest(tests);
+		defaultPoolThreads = threads;
+		foreach(test; taskPool.parallel(tests, 1)) {
+			auto result = test.executeTest;
 
-		foreach(result; results) {
 			totalDuration += result.duration;
 
 			if(result.succeed) {
@@ -141,8 +146,6 @@ TestResult executeTest(Test test) {
 	import core.exception : AssertError;
 	auto ret = TestResult(test);
 
-	auto started = MonoTime.currTime;
-
 	void trace(Throwable t) {
 		foreach(th; t) {
 			immutable(string)[] trace;
@@ -153,6 +156,7 @@ TestResult executeTest(Test test) {
 		}
 	}
 
+	auto started = MonoTime.currTime;
 	try {
 		scope(exit) ret.duration = MonoTime.currTime - started;
 		test.ptr();
