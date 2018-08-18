@@ -1,4 +1,4 @@
-module example.one;
+module example.nameless;
 
 unittest {
 	assert(true);
