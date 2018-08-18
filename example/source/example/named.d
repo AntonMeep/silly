@@ -1,4 +1,4 @@
-module example.two;
+module example.named;
 
 @("Hello! It's me, your named unittest")
 unittest {
