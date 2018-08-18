@@ -51,7 +51,7 @@ Just add **silly** as a dependency of your project and that's it.
 {
 	<...>
 	"dependencies": {
-		"silly": "~>0.0.2"
+		"silly": "~>0.1.0"
 	}
 }
 ```
@@ -60,5 +60,5 @@ Just add **silly** as a dependency of your project and that's it.
 
 ```
 <...>
-dependency "silly" version="~>0.0.2"
+dependency "silly" version="~>0.1.0"
 ```
