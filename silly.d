@@ -22,7 +22,7 @@ shared static this() {
 	import std.getopt : getopt;
 
 	Runtime.extendedModuleUnitTester = () {
-		size_t workerCount, passed, failed;
+		size_t passed, failed;
 		bool fullStackTraces, showDurations, verbose;
 
 		auto args = Runtime.args;
@@ -81,9 +81,10 @@ shared static this() {
 
 		// Result reporter
 		Duration totalDuration;
-		foreach(test; tests) {
-			auto result = executeTest(test);
 
+		auto results = taskPool.amap!executeTest(tests);
+
+		foreach(result; results) {
 			totalDuration += result.duration;
 
 			if(result.succeed) {
