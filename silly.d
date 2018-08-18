@@ -52,100 +52,96 @@ shared static this() {
 
 		Console.init;
 
-		new FiberScheduler().start({
-			// Test discovery
-			foreach(m; dub_test_root.allModules) {
-				static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
-					alias module_ = m;
-				} else {
-					// For cases when module contains member of the same name
-					alias module_ = Alias!(__traits(parent, m));
-				}
+		Test[] tests;
 
-				// Unittests in the module
-				static foreach(test; __traits(getUnitTests, module_)) {
-					++workerCount;
-					spawn({
-						ownerTid.send(executeTest!test);
-					});
-				}
-
-				// Unittests in structs and classes
-				static foreach(member; __traits(derivedMembers, module_)) {
-					static if(__traits(compiles, __traits(parent, __traits(getMember, module_, member))) &&
-							  __traits(isSame, __traits(parent, __traits(getMember, module_, member)), module_) &&
-							  __traits(compiles, __traits(getUnitTests, __traits(getMember, module_, member)))) {
-						static foreach(test; __traits(getUnitTests, __traits(getMember, module_, member))) {
-							++workerCount;
-							spawn({
-								ownerTid.send(executeTest!test);
-							});
-						}
-					}
-				}
+		// Test discovery
+		foreach(m; dub_test_root.allModules) {
+			static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
+				alias module_ = m;
+			} else {
+				// For cases when module contains member of the same name
+				alias module_ = Alias!(__traits(parent, m));
 			}
 
-			// Result reporter
-			Duration totalDuration;
-			foreach(unused; 0..workerCount) {
-				auto result = receiveOnly!TestResult;
+			// Unittests in the module
+			foreach(test; __traits(getUnitTests, module_))
+				tests ~= Test(fullyQualifiedName!test, getTestName!test, &test);
 
-				totalDuration += result.duration;
+			// // Unittests in structs and classes
+			// static foreach(member; __traits(derivedMembers, module_)) {
+			// 	static if(__traits(compiles, __traits(parent, __traits(getMember, module_, member))) &&
+			// 				__traits(isSame, __traits(parent, __traits(getMember, module_, member)), module_) &&
+			// 				__traits(compiles, __traits(getUnitTests, __traits(getMember, module_, member)))) {
+			// 		static foreach(test; __traits(getUnitTests, __traits(getMember, module_, member))) {
+			// 			++workerCount;
+			// 			spawn({
+			// 				ownerTid.send(executeTest!test);
+			// 			});
+			// 		}
+			// 	}
+			// }
+		}
 
-				if(result.succeed) {
-					Console.write(" ✓ ", Colour.ok, true);
-					++passed;
-				} else {
-					Console.write(" ✗ ", Colour.achtung, true);
-					++failed;
-				}
-				
-				Console.write(result.fullName[0..result.fullName.lastIndexOf('.')].truncateName(verbose), Colour.none, true);
-				" %s".writef(result.testName);
+		// Result reporter
+		Duration totalDuration;
+		foreach(test; tests) {
+			auto result = executeTest(test);
 
-				if(showDurations) {
-					" (%d ms)".writef(result.duration.total!"msecs");
-				} else if(result.duration >= 100.msecs) {
-					Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
-				}
+			totalDuration += result.duration;
 
-				writeln;
+			if(result.succeed) {
+				Console.write(" ✓ ", Colour.ok, true);
+				++passed;
+			} else {
+				Console.write(" ✗ ", Colour.achtung, true);
+				++failed;
+			}
+			
+			Console.write(result.test.fullName[0..result.test.fullName.lastIndexOf('.')].truncateName(verbose), Colour.none, true);
+			" %s".writef(result.test.testName);
 
-				foreach(th; result.thrown) {
-					"    %s has been thrown from %s:%d with the following message:"
-						.writefln(th.type, th.file, th.line);
-					foreach(line; th.message.lineSplitter)
-						"      ".writeln(line);
-
-					
-					writeln("    --- Stack trace ---");
-					if(fullStackTraces) {
-						foreach(line; th.info)
-							writeln("    ", line);
-					} else {
-						for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
-							writeln("    ", th.info[i]);
-					}
-					writeln("    -------------------");
-				}
+			if(showDurations) {
+				" (%d ms)".writef(result.duration.total!"msecs");
+			} else if(result.duration >= 100.msecs) {
+				Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
 			}
 
 			writeln;
-			Console.write("Summary: ", Colour.none, true);
-			Console.write(passed, Colour.ok);
-			" passed, ".writef;
 
-			Console.write(failed, failed ? Colour.achtung : Colour.none);
-			" failed in %d ms\n".writef(totalDuration.total!"msecs");
-		});
+			foreach(th; result.thrown) {
+				"    %s has been thrown from %s:%d with the following message:"
+					.writefln(th.type, th.file, th.line);
+				foreach(line; th.message.lineSplitter)
+					"      ".writeln(line);
+
+				
+				writeln("    --- Stack trace ---");
+				if(fullStackTraces) {
+					foreach(line; th.info)
+						writeln("    ", line);
+				} else {
+					for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
+						writeln("    ", th.info[i]);
+				}
+				writeln("    -------------------");
+			}
+		}
+
+		writeln;
+		Console.write("Summary: ", Colour.none, true);
+		Console.write(passed, Colour.ok);
+		" passed, ".writef;
+
+		Console.write(failed, failed ? Colour.achtung : Colour.none);
+		" failed in %d ms\n".writef(totalDuration.total!"msecs");
 
 		return UnitTestResult(passed + failed, passed, false, false);
 	};
 }
 
-TestResult executeTest(alias test)() {
+TestResult executeTest(Test test) {
 	import core.exception : AssertError;
-	auto ret = TestResult(fullyQualifiedName!test, getTestName!test);
+	auto ret = TestResult(test);
 
 	auto started = MonoTime.currTime;
 
@@ -161,7 +157,7 @@ TestResult executeTest(alias test)() {
 
 	try {
 		scope(exit) ret.duration = MonoTime.currTime - started;
-		test();
+		test.ptr();
 		ret.succeed = true;
 	} catch(Exception e) {
 		trace(e);
@@ -172,9 +168,15 @@ TestResult executeTest(alias test)() {
 	return ret;
 }
 
-struct TestResult {
+struct Test {
 	string fullName,
 		   testName;
+	
+	void function() ptr;
+}
+
+struct TestResult {
+	Test test;
 	bool succeed;
 	Duration duration;
 
