@@ -71,7 +71,8 @@
 						<ul>
 							<li>It should be written in <a href="https://dlang.org/">D</a></li>
 							<li>It should use <a href="https://dub.pm/">DUB</a></li>
-							<li>It shouldn't define <code>main</code> function when built in <code>unittest</code> mode (<a href="https://dlang.org/spec/version.html">conditional compilation</a> will help you here)</li>
+							<li>It should <strong>not</strong> define <code>main</code> function when built in <code>unittest</code> mode (<a href="https://dlang.org/spec/version.html">conditional compilation</a> will help you here)</li>
+							<li>Make sure there's no <code>targetType: executable</code> in <code>unittest</code> configuration in dub.json/dub.sdl. See <a href="https://gitlab.com/ohboi/silly/issues/12">#12</a> for more info</li>
 						</ul>
 					</div>
 				</div>
