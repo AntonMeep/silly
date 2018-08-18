@@ -35,13 +35,13 @@ shared static this() {
 				"Show full stack traces. By default traces are truncated",
 				&fullStackTraces,
 			"show-durations",
-				"Show durations for all unit tests. Default is false",
+				"Show durations of every unit test",
 				&showDurations,
 			"threads",
 				"Number of threads to use. 1 to run in single thread",
 				&threads,
 			"verbose",
-				"Show verbose output",
+				"Show verbose output. Turns on `--full-traces` and `--show-durations`",
 				(string o) { verbose = fullStackTraces = showDurations = true; }
 		);
 
