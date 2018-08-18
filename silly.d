@@ -10,7 +10,7 @@ static if(!__traits(compiles, () {static import dub_test_root;})) {
 
 import core.time        : Duration, MonoTime, msecs;
 import std.algorithm    : any, canFind, count, max;
-import std.concurrency  : FiberScheduler, spawn, ownerTid, send, receiveOnly;
+import std.parallelism  : taskPool;
 import std.format       : format;
 import std.meta         : Alias;
 import std.stdio        : stdout, writef, writeln, writefln;
@@ -67,19 +67,16 @@ shared static this() {
 			foreach(test; __traits(getUnitTests, module_))
 				tests ~= Test(fullyQualifiedName!test, getTestName!test, &test);
 
-			// // Unittests in structs and classes
-			// static foreach(member; __traits(derivedMembers, module_)) {
-			// 	static if(__traits(compiles, __traits(parent, __traits(getMember, module_, member))) &&
-			// 				__traits(isSame, __traits(parent, __traits(getMember, module_, member)), module_) &&
-			// 				__traits(compiles, __traits(getUnitTests, __traits(getMember, module_, member)))) {
-			// 		static foreach(test; __traits(getUnitTests, __traits(getMember, module_, member))) {
-			// 			++workerCount;
-			// 			spawn({
-			// 				ownerTid.send(executeTest!test);
-			// 			});
-			// 		}
-			// 	}
-			// }
+			// Unittests in structs and classes
+			foreach(member; __traits(derivedMembers, module_)) {
+				static if(__traits(compiles, __traits(parent, __traits(getMember, module_, member))) &&
+					__traits(isSame, __traits(parent, __traits(getMember, module_, member)), module_) &&
+					__traits(compiles, __traits(getUnitTests, __traits(getMember, module_, member)))) {
+					foreach(test; __traits(getUnitTests, __traits(getMember, module_, member))) {
+						tests ~= Test(fullyQualifiedName!test, getTestName!test, &test);
+					}
+				}
+			}
 		}
 
 		// Result reporter
