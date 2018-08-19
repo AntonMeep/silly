@@ -60,7 +60,8 @@ shared static this() {
 
 		// Test discovery
 		foreach(m; dub_test_root.allModules) {
-			static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m) && !isAggregateType!m) {
+			static if(__traits(compiles, __traits(getUnitTests, m)) &&
+					!(__traits(isTemplate, m) || (__traits(compiles, isAggregateType!m) && isAggregateType!m))) {
 				alias module_ = m;
 			} else {
 				// For cases when module contains member of the same name
