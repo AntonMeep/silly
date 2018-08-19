@@ -15,7 +15,7 @@ import std.format       : format;
 import std.meta         : Alias;
 import std.stdio        : stdout, writef, writeln, writefln;
 import std.string       : indexOf, leftJustifier, lastIndexOf, lineSplitter;
-import std.traits       : fullyQualifiedName;
+import std.traits       : fullyQualifiedName, isAggregateType;
 
 shared static this() {
 	import core.runtime : Runtime, UnitTestResult;
@@ -60,7 +60,7 @@ shared static this() {
 
 		// Test discovery
 		foreach(m; dub_test_root.allModules) {
-			static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m)) {
+			static if(__traits(compiles, __traits(getUnitTests, m)) && !__traits(isTemplate, m) && !isAggregateType!m) {
 				alias module_ = m;
 			} else {
 				// For cases when module contains member of the same name
