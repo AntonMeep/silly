@@ -16,6 +16,9 @@ import std.meta         : Alias;
 import std.stdio        : stdout, writef, writeln, writefln;
 import std.string       : indexOf, leftJustifier, lastIndexOf, lineSplitter;
 import std.traits       : fullyQualifiedName, isAggregateType;
+import std.concurrency  : receive, send, spawn, thisTid;
+
+struct LoggerDone {}
 
 shared static this() {
 	import core.runtime : Runtime, UnitTestResult;
@@ -84,63 +87,88 @@ shared static this() {
 			}
 		}
 
-		// Result reporter
-		Duration totalDuration;
-
 		defaultPoolThreads = threads;
+
+		auto loggerTid = spawn(&resultLogger, showDurations, fullStackTraces, verbose);
+
 		foreach(test; taskPool.parallel(tests, 1)) {
 			auto result = test.executeTest;
 
-			totalDuration += result.duration;
+			send(loggerTid, result);
 
 			if(result.succeed) {
-				Console.write(" ✓ ", Colour.ok, true);
 				++passed;
 			} else {
-				Console.write(" ✗ ", Colour.achtung, true);
 				++failed;
-			}
-			
-			Console.write(result.test.fullName[0..result.test.fullName.lastIndexOf('.')].truncateName(verbose), Colour.none, true);
-			" %s".writef(result.test.testName);
-
-			if(showDurations) {
-				" (%d ms)".writef(result.duration.total!"msecs");
-			} else if(result.duration >= 100.msecs) {
-				Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
-			}
-
-			writeln;
-
-			foreach(th; result.thrown) {
-				"    %s has been thrown from %s:%d with the following message:"
-					.writefln(th.type, th.file, th.line);
-				foreach(line; th.message.lineSplitter)
-					"      ".writeln(line);
-
-				
-				writeln("    --- Stack trace ---");
-				if(fullStackTraces) {
-					foreach(line; th.info)
-						writeln("    ", line);
-				} else {
-					for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
-						writeln("    ", th.info[i]);
-				}
-				writeln("    -------------------");
 			}
 		}
 
-		writeln;
-		Console.write("Summary: ", Colour.none, true);
-		Console.write(passed, Colour.ok);
-		" passed, ".writef;
-
-		Console.write(failed, failed ? Colour.achtung : Colour.none);
-		" failed in %d ms\n".writef(totalDuration.total!"msecs");
+		send(loggerTid, LoggerDone());
 
 		return UnitTestResult(passed + failed, passed, false, false);
 	};
+}
+
+void resultLogger(bool showDurations, bool fullStackTraces, bool verbose) {
+
+	Duration totalDuration;
+	size_t passed, failed;
+
+	void write(TestResult result) {
+		if(result.succeed) {
+			Console.write(" ✓ ", Colour.ok, true);
+			++passed;
+		} else {
+			Console.write(" ✗ ", Colour.achtung, true);
+			++failed;
+		}
+
+		totalDuration += result.duration;
+
+		Console.write(result.test.fullName[0..result.test.fullName.lastIndexOf('.')].truncateName(verbose), Colour.none, true);
+		" %s".writef(result.test.testName);
+
+		if(showDurations) {
+			" (%d ms)".writef(result.duration.total!"msecs");
+		} else if(result.duration >= 100.msecs) {
+			Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
+		}
+
+		writeln;
+
+		foreach(th; result.thrown) {
+			"    %s has been thrown from %s:%d with the following message:"
+				.writefln(th.type, th.file, th.line);
+			foreach(line; th.message.lineSplitter)
+				"      ".writeln(line);
+
+			writeln("    --- Stack trace ---");
+			if(fullStackTraces) {
+				foreach(line; th.info)
+					writeln("    ", line);
+			} else {
+				for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
+					writeln("    ", th.info[i]);
+			}
+			writeln("    -------------------");
+		}
+	}
+
+	bool done = false;
+	while (!done) {
+		receive(
+			(TestResult result) { write(result); },
+			(LoggerDone _) { done = true; },
+		);
+	}
+
+	writeln;
+	Console.write("Summary: ", Colour.none, true);
+	Console.write(passed, Colour.ok);
+	" passed, ".writef;
+
+	Console.write(failed, failed ? Colour.achtung : Colour.none);
+	" failed in %d ms\n".writef(totalDuration.total!"msecs");
 }
 
 TestResult executeTest(Test test) {
