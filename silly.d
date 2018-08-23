@@ -20,8 +20,6 @@ import std.stdio        : stdout, writef, writeln, writefln;
 import std.string       : indexOf, leftJustifier, lastIndexOf, lineSplitter;
 import std.traits       : fullyQualifiedName, isAggregateType;
 
-struct LoggerDone {}
-
 shared static this() {
 	Runtime.extendedModuleUnitTester = () {
 		bool verbose;
@@ -82,6 +80,8 @@ shared static this() {
 
 		auto loggerTid = spawn(&resultLogger, verbose);
 		
+		auto started = MonoTime.currTime;
+
 		with(new TaskPool(threads)) {
 			foreach(test; parallel(tests, 1))
 				send(loggerTid, test.executeTest);
@@ -89,14 +89,14 @@ shared static this() {
 			finish(true);
 		}
 
-		send(loggerTid, LoggerDone());
+		loggerTid.send(MonoTime.currTime - started);
 
 		return receiveOnly!UnitTestResult;
 	};
 }
 
 void resultLogger(bool verbose) {
-	Duration totalDuration;
+	Duration timeElapsed;
 	size_t passed, failed;
 
 	bool done = false;
@@ -110,8 +110,6 @@ void resultLogger(bool verbose) {
 					Console.write(" ✗ ", Colour.achtung, true);
 					++failed;
 				}
-
-				totalDuration += result.duration;
 
 				Console.write(result.test.fullName[0..result.test.fullName.lastIndexOf('.')].truncateName(verbose), Colour.none, true);
 				" %s".writef(result.test.testName);
@@ -141,8 +139,10 @@ void resultLogger(bool verbose) {
 					writeln("    -------------------");
 				}
 			},
-			(LoggerDone _) {
+			(Duration time) {
 				done = true;
+				timeElapsed = time;
+
 				ownerTid.send(UnitTestResult(passed + failed, passed, false, false));
 			},
 		);
@@ -153,7 +153,7 @@ void resultLogger(bool verbose) {
 	" passed, ".writef;
 
 	Console.write(failed, failed ? Colour.achtung : Colour.none);
-	" failed in %d ms\n".writef(totalDuration.total!"msecs");
+	" failed in %d ms\n".writef(timeElapsed.total!"msecs");
 }
 
 TestResult executeTest(Test test) {
