@@ -8,22 +8,21 @@ static if(!__traits(compiles, () {static import dub_test_root;})) {
 	static import dub_test_root;
 }
 
+import core.runtime     : Runtime, UnitTestResult;
 import core.time        : Duration, MonoTime, msecs;
 import std.algorithm    : any, canFind, count, max;
-import std.parallelism  : taskPool, totalCPUs, defaultPoolThreads;
+import std.concurrency  : receive, send, spawn, thisTid, ownerTid, receiveOnly;
 import std.format       : format;
+import std.getopt       : getopt;
 import std.meta         : Alias;
+import std.parallelism  : taskPool, totalCPUs, defaultPoolThreads;
 import std.stdio        : stdout, writef, writeln, writefln;
 import std.string       : indexOf, leftJustifier, lastIndexOf, lineSplitter;
 import std.traits       : fullyQualifiedName, isAggregateType;
-import std.concurrency  : receive, send, spawn, thisTid;
 
 struct LoggerDone {}
 
 shared static this() {
-	import core.runtime : Runtime, UnitTestResult;
-	import std.getopt : getopt;
-
 	Runtime.extendedModuleUnitTester = () {
 		bool fullStackTraces, showDurations, verbose;
 		size_t passed, failed;
@@ -91,26 +90,16 @@ shared static this() {
 
 		auto loggerTid = spawn(&resultLogger, showDurations, fullStackTraces, verbose);
 
-		foreach(test; taskPool.parallel(tests, 1)) {
-			auto result = test.executeTest;
-
-			send(loggerTid, result);
-
-			if(result.succeed) {
-				++passed;
-			} else {
-				++failed;
-			}
-		}
+		foreach(test; taskPool.parallel(tests, 1))
+			send(loggerTid, test.executeTest);
 
 		send(loggerTid, LoggerDone());
 
-		return UnitTestResult(passed + failed, passed, false, false);
+		return receiveOnly!UnitTestResult;
 	};
 }
 
 void resultLogger(bool showDurations, bool fullStackTraces, bool verbose) {
-
 	Duration totalDuration;
 	size_t passed, failed;
 
@@ -158,7 +147,10 @@ void resultLogger(bool showDurations, bool fullStackTraces, bool verbose) {
 	while (!done) {
 		receive(
 			(TestResult result) { write(result); },
-			(LoggerDone _) { done = true; },
+			(LoggerDone _) {
+				done = true;
+				ownerTid.send(UnitTestResult(passed + failed, passed, false, false));
+			},
 		);
 	}
 
