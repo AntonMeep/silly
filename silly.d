@@ -15,7 +15,7 @@ import std.concurrency  : receive, send, spawn, thisTid, ownerTid, receiveOnly;
 import std.format       : format;
 import std.getopt       : getopt;
 import std.meta         : Alias;
-import std.parallelism  : taskPool, totalCPUs, defaultPoolThreads;
+import std.parallelism  : TaskPool, totalCPUs;
 import std.stdio        : stdout, writef, writeln, writefln;
 import std.string       : indexOf, leftJustifier, lastIndexOf, lineSplitter;
 import std.traits       : fullyQualifiedName, isAggregateType;
@@ -80,12 +80,14 @@ shared static this() {
 			}
 		}
 
-		defaultPoolThreads = threads;
-
 		auto loggerTid = spawn(&resultLogger, verbose);
+		
+		with(new TaskPool(threads)) {
+			foreach(test; parallel(tests, 1))
+				send(loggerTid, test.executeTest);
 
-		foreach(test; taskPool.parallel(tests, 1))
-			send(loggerTid, test.executeTest);
+			finish(true);
+		}
 
 		send(loggerTid, LoggerDone());
 
