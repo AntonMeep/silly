@@ -221,7 +221,7 @@ static struct Console {
 		if(!noColours) {
 			version(Posix) {
 				import core.sys.posix.unistd;
-				noColours = isatty(STDOUT_FILENO) != 0;
+				noColours = isatty(STDOUT_FILENO) == 0;
 				return;
 			}
 		}
