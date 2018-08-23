@@ -117,7 +117,7 @@ void resultLogger(bool verbose) {
 				" %s".writef(result.test.testName);
 
 				if(verbose) {
-					" (%d ms)".writef(result.duration.total!"msecs");
+					" (%.3f ms)".writef((cast(real) result.duration.total!"usecs") / 10.0f ^^ 3);
 				} else if(result.duration >= 100.msecs) {
 					Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
 				}
