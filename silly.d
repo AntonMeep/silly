@@ -32,7 +32,7 @@ shared static this() {
 		auto getoptResult = args.getopt(
 			"no-colours",
 				"Disable colours",
-				(string o) { useColours = false; },
+				&noColours,
 			"t|threads",
 				"Number of threads to use. 1 to run in single thread",
 				&threads,
@@ -207,7 +207,7 @@ struct Thrown {
 	immutable(string)[] info;
 }
 
-static bool useColours = true;
+__gshared bool noColours;
 
 enum Colour {
 	none,
@@ -218,19 +218,19 @@ enum Colour {
 
 static struct Console {
 	static void init() {
-		if(useColours) {
+		if(!noColours) {
 			version(Posix) {
 				import core.sys.posix.unistd;
-				useColours = isatty(STDOUT_FILENO) != 0;
+				noColours = isatty(STDOUT_FILENO) != 0;
 				return;
 			}
 		}
 
-		useColours = false;
+		noColours = true;
 	}
 
 	static void write(T)(T t, Colour c = Colour.none, bool bright = false) {
-		if(useColours) {
+		if(!noColours) {
 			version(Posix) {
 				if(c == Colour.none && bright) {
 					stdout.writef("\033[1m%s\033[m", t);
