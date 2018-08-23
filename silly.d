@@ -24,7 +24,7 @@ struct LoggerDone {}
 
 shared static this() {
 	Runtime.extendedModuleUnitTester = () {
-		bool fullStackTraces, showDurations, verbose;
+		bool verbose;
 		size_t passed, failed;
 		uint threads = totalCPUs - 1;
 
@@ -33,18 +33,12 @@ shared static this() {
 			"no-colours",
 				"Disable colours",
 				(string o) { useColours = false; },
-			"full-traces",
-				"Show full stack traces. By default traces are truncated",
-				&fullStackTraces,
-			"show-durations",
-				"Show durations of every unit test",
-				&showDurations,
-			"threads",
+			"t|threads",
 				"Number of threads to use. 1 to run in single thread",
 				&threads,
-			"verbose",
-				"Show verbose output. Turns on `--full-traces` and `--show-durations`",
-				(string o) { verbose = fullStackTraces = showDurations = true; }
+			"v|verbose",
+				"Show verbose output (full stack traces and durations)",
+				&verbose,
 		);
 
 		if(getoptResult.helpWanted) {
@@ -88,7 +82,7 @@ shared static this() {
 
 		defaultPoolThreads = threads;
 
-		auto loggerTid = spawn(&resultLogger, showDurations, fullStackTraces, verbose);
+		auto loggerTid = spawn(&resultLogger, verbose);
 
 		foreach(test; taskPool.parallel(tests, 1))
 			send(loggerTid, test.executeTest);
@@ -99,7 +93,7 @@ shared static this() {
 	};
 }
 
-void resultLogger(bool showDurations, bool fullStackTraces, bool verbose) {
+void resultLogger(bool verbose) {
 	Duration totalDuration;
 	size_t passed, failed;
 
@@ -120,7 +114,7 @@ void resultLogger(bool showDurations, bool fullStackTraces, bool verbose) {
 				Console.write(result.test.fullName[0..result.test.fullName.lastIndexOf('.')].truncateName(verbose), Colour.none, true);
 				" %s".writef(result.test.testName);
 
-				if(showDurations) {
+				if(verbose) {
 					" (%d ms)".writef(result.duration.total!"msecs");
 				} else if(result.duration >= 100.msecs) {
 					Console.write(" (%d ms)".format(result.duration.total!"msecs"), Colour.achtung);
@@ -135,7 +129,7 @@ void resultLogger(bool showDurations, bool fullStackTraces, bool verbose) {
 						"      ".writeln(line);
 
 					writeln("    --- Stack trace ---");
-					if(fullStackTraces) {
+					if(verbose) {
 						foreach(line; th.info)
 							writeln("    ", line);
 					} else {
