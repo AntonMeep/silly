@@ -32,7 +32,7 @@ shared static this() {
 				"Disable colours",
 				&noColours,
 			"t|threads",
-				"Number of threads to use. 1 to run in single thread",
+				"Number of worker threads to use. 0 to disable worker threads",
 				&threads,
 			"v|verbose",
 				"Show verbose output (full stack traces and durations)",
@@ -79,7 +79,7 @@ shared static this() {
 		}
 
 		auto loggerTid = spawn(&resultLogger, verbose);
-		
+
 		auto started = MonoTime.currTime;
 
 		with(new TaskPool(threads)) {
