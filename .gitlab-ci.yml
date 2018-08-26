@@ -15,13 +15,12 @@ ldc:
     COMPILER: ldc
 
 pages:
-  image: alpine
-  script:
-    - cp -r pages/public public
+  image: node
+  script: cd pages && yarn install && yarn build --mode=production && cp -r public ../public
   artifacts:
     paths:
       - public/
-  only:
-    - /^v\d+\.\d+\.\d+.*$/
-  except:
-    - branches
+  # only:
+  #   - /^v\d+\.\d+\.\d+.*$/
+  # except:
+  #   - branches
