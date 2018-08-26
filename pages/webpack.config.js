@@ -1,5 +1,6 @@
 const webpack = require('webpack')
-const ExtractTextPlugin = require("extract-text-webpack-plugin")
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 const path = require('path')
 
 const extractSass = new ExtractTextPlugin({
@@ -46,6 +47,16 @@ module.exports = {
 			jQuery: "jquery", // Used for Bootstrap JavaScript components
 			Popper: ['popper.js', 'default'] // Used for Bootstrap dropdown, popup and tooltip JavaScript components
 		}),
-		extractSass
+		extractSass,
+		new CopyWebpackPlugin([
+			{
+				from: './src/*.html',
+				flatten: true
+			},
+			{
+				from: './src/*.svg',
+				flatten: true
+			}
+		])
 	]
 };
