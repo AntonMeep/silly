@@ -108,10 +108,19 @@ dependency "silly" version="~>0.2.0"</code></pre>
 						<dl>
 							<dt>--no-colours</dt>
 							<dd>Disable colours</dd>
-							<dt>--threads</dt>
+							<dt>-t <code>&lt;n&gt;</code></dt>
+							<dt>--threads <code>&lt;n&gt;</code></dt>
 							<dd>Number of worker threads to use. <code>0</code> to disable worker threads</dd>
+							<dt>-i <code>&lt;regexp&gt;</code></dt>
+							<dt>--include <code>&lt;regexp&gt;</code></dt>
+							<dd>Run tests if their name matches specified regular expression</dd>
+							<dt>-e <code>&lt;regexp&gt;</code></dt>
+							<dt>--exclude <code>&lt;regexp&gt;</code></dt>
+							<dd>Skip tests if their name matches specified regular expression</dd>
+							<dt>-v</dt>
 							<dt>--verbose</dt>
 							<dd>Show verbose output (full stack traces and durations)</dd>
+							<dt>-h</dt>
 							<dt>--help</dt>
 							<dd>Help information</dd>
 						</dd>
