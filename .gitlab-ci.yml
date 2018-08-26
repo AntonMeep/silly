@@ -1,18 +1,10 @@
-image: docker:stable
-
-services:
-- docker:dind
-
-dmd: &test
-  variables:
-    COMPILER: dmd
-  stage: build
-  script: docker run -v$(pwd):/source ohboi/mini$COMPILER ./test/run.sh
+dmd:
+  image: ohboi/minidmd
+  script: ./test/run.sh
 
 ldc:
-  <<: *test
-  variables:
-    COMPILER: ldc
+  image: ohboi/minildc
+  script: ./test/run.sh
 
 pages:
   image: node
@@ -20,7 +12,7 @@ pages:
   artifacts:
     paths:
       - public/
-  # only:
-  #   - /^v\d+\.\d+\.\d+.*$/
-  # except:
-  #   - branches
+  only:
+    - /^v\d+\.\d+\.\d+.*$/
+  except:
+    - branches
