@@ -40,25 +40,3 @@ $ dub test
 ### Your choice, your test runner
 
 It's up to you whether you want to use this test runner or not. Get rid of it just by removing the dependency. It won't break your CI/CD scripts and cause any trouble.
-
-## Installation
-
-Just add **silly** as a dependency of your project and that's it.
-
-### dub.json
-
-```json
-{
-	<...>
-	"dependencies": {
-		"silly": "~>0.2.0"
-	}
-}
-```
-
-### dub.sdl
-
-```
-<...>
-dependency "silly" version="~>0.2.0"
-```
