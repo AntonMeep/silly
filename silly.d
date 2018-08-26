@@ -16,6 +16,7 @@ import std.format       : format;
 import std.getopt       : getopt;
 import std.meta         : Alias;
 import std.parallelism  : TaskPool, totalCPUs;
+import std.regex        : matchFirst;
 import std.stdio        : stdout, writef, writeln, writefln;
 import std.string       : indexOf, leftJustifier, lastIndexOf, lineSplitter;
 import std.traits       : fullyQualifiedName, isAggregateType;
@@ -25,6 +26,7 @@ shared static this() {
 		bool verbose;
 		size_t passed, failed;
 		uint threads = totalCPUs - 1;
+		string include, exclude;
 
 		auto args = Runtime.args;
 		auto getoptResult = args.getopt(
@@ -34,6 +36,12 @@ shared static this() {
 			"t|threads",
 				"Number of worker threads to use. 0 to disable worker threads",
 				&threads,
+			"i|include",
+				"Run tests if their name matches specified regular expression",
+				&include,
+			"e|exclude",
+				"Skip tests if their name matches specified regular expression",
+				&exclude,
 			"v|verbose",
 				"Show verbose output (full stack traces and durations)",
 				&verbose,
@@ -83,8 +91,12 @@ shared static this() {
 		auto started = MonoTime.currTime;
 
 		with(new TaskPool(threads)) {
-			foreach(test; parallel(tests, 1))
-				send(loggerTid, test.executeTest);
+			foreach(test; parallel(tests, 1)) {
+				if((!include && !exclude) ||
+					(include && !test.testName.matchFirst(include).empty) ||
+					(exclude &&  test.testName.matchFirst(exclude).empty))
+						send(loggerTid, test.executeTest);
+			}
 
 			finish(true);
 		}
