@@ -1,6 +1,6 @@
 {
-	"name": "test",
-	"sourceFiles": ["test.d"],
+	"name": "issue_2",
+	"sourceFiles": ["issue_2.d"],
 	"importPaths": ["."],
 	"configurations": [
 		{
@@ -10,7 +10,7 @@
 		{
 			"name": "unittest",
 			"dependencies": {
-				"silly": {"path": "../../../"}
+				"silly": {"path": "../../"}
 			}
 		}
 	]
