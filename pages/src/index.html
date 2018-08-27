@@ -113,10 +113,10 @@ dependency "silly" version="<span class="version">*</span>"</code></pre>
 							<dd>Number of worker threads to use. <code>0</code> to disable worker threads</dd>
 							<dt>-i <code>&lt;regexp&gt;</code></dt>
 							<dt>--include <code>&lt;regexp&gt;</code></dt>
-							<dd>Run tests if their name matches specified regular expression</dd>
+							<dd>Run tests if their name matches specified regular expression. See <a href="#choosing-tests">Choosing tests</a></dd>
 							<dt>-e <code>&lt;regexp&gt;</code></dt>
 							<dt>--exclude <code>&lt;regexp&gt;</code></dt>
-							<dd>Skip tests if their name matches specified regular expression</dd>
+							<dd>Skip tests if their name matches specified regular expression. See <a href="#choosing-tests">Choosing tests</a></dd>
 							<dt>-v</dt>
 							<dt>--verbose</dt>
 							<dd>Show verbose output (full stack traces and durations)</dd>
@@ -124,6 +124,23 @@ dependency "silly" version="<span class="version">*</span>"</code></pre>
 							<dt>--help</dt>
 							<dd>Help information</dd>
 						</dd>
+					</div>
+				</div>
+				<div class="row mt-5">
+					<div class="col">
+						<h2 id="choosing-tests">Choosing tests to be run <a href="#choosing-tests">#</a></h2>
+						<p>With <code>--include</code> and <code>--exclude</code> options it's possible to control which tests will be run. These options take regular expression in <a href="https://dlang.org/phobos/std_regex.html#Syntax%20and%20general%20information">std.regex'</a> format</p>
+						<p>
+							<code>--include</code> option will tell <strong>silly</strong> to <em>run</em> tests which match specified regular expression. Other tests will be skipped<br>
+							<code>--exclude</code> option will tell <strong>silly</strong> to <em>skip</em> tests which match specified regular expression. Other tests will be run
+						</p>
+						<div class="alert alert-info" role="alert">
+							Note: these options match <code>&lt;full test name (example.one.__unittest_L1_C1)&gt; &lt;pretty name | __unittest_L\d+_C\d+&gt;</code> against specified regex. Because of that <code>^</code> assertions won't match beginning of the test name but beginning of the module name. Use <code>.*\s</code> to skip module part.
+						</div>
+
+						<div class="alert alert-warning" role="alert">
+							Using both options at the same can produce unexpected results and therefore is not advised
+						</div>
 					</div>
 				</div>
 				<div class="row mt-5">

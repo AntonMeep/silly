@@ -93,8 +93,8 @@ shared static this() {
 		with(new TaskPool(threads)) {
 			foreach(test; parallel(tests, 1)) {
 				if((!include && !exclude) ||
-					(include && !test.testName.matchFirst(include).empty) ||
-					(exclude &&  test.testName.matchFirst(exclude).empty))
+					(include && !(test.fullName ~ " " ~ test.testName).matchFirst(include).empty) ||
+					(exclude &&  (test.fullName ~ " " ~ test.testName).matchFirst(exclude).empty))
 						send(loggerTid, test.executeTest);
 			}
 
