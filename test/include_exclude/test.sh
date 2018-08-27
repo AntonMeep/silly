@@ -26,6 +26,6 @@ $EXEC --no-colours --include "aa$"     | grep -c "Summary: 2 passed, 0 failed" >
 
 $EXEC --no-colours --exclude "BAR"     | grep -c "Summary: 7 passed, 0 failed" > /dev/null
 $EXEC --no-colours --exclude "BAR$"    | grep -c "Summary: 8 passed, 0 failed" > /dev/null
-$EXEC --no-colours --exclude "^BAR"    | grep -c "Summary: 8 passed, 0 failed" > /dev/null
+$EXEC --no-colours --exclude ".* BAR"  | grep -c "Summary: 8 passed, 0 failed" > /dev/null
 
 rm -r $(dirname "${BASH_SOURCE[0]}")/.dub $(dirname "${BASH_SOURCE[0]}")/include_exclude-test-unittest
