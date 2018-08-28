@@ -256,14 +256,15 @@ static struct Console {
 
 string getTestName(alias test)() {
 	string name = __traits(identifier, test);
-	static foreach(attribute; __traits(getAttributes, test)) {
-		static if(is(typeof(attribute) : string)) {
+
+	foreach(attribute; __traits(getAttributes, test)) {
+		if(is(typeof(attribute) : string)) {
 			name = attribute;
-			goto done;
+			break;
 		}
 	}
 
-	done: return name;
+	return name;
 }
 
 string truncateName(string s, bool verbose = false) {
