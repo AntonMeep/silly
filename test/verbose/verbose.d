@@ -20,5 +20,5 @@ unittest {
 
 @("4")
 unittest {
-	throw new Exception("");
+	assert(false);
 }

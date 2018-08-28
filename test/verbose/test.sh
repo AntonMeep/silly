@@ -5,7 +5,11 @@ OUTPUT=$(dub test -b unittest-cov --root=$(dirname "${BASH_SOURCE[0]}") --skip-r
 echo "$OUTPUT" | grep -cE "✓ verbose 1 \(100[0-9]\.[0-9]{3} ms\)" > /dev/null
 echo "$OUTPUT" | grep -cE "✓ verbose 2 \(50[0-9]\.[0-9]{3} ms\)" > /dev/null
 echo "$OUTPUT" | grep -cE "✓ verbose 3 \(25[0-9]\.[0-9]{3} ms\)" > /dev/null
-echo "$OUTPUT" | grep -cE "silly.d" > /dev/null
+echo "$OUTPUT" | grep -c  "✗ verbose 4" > /dev/null
 echo "$OUTPUT" | grep -c "Summary: 3 passed, 1 failed" > /dev/null
+
+echo "$OUTPUT" | grep -c "core.exception.AssertError has been thrown from verbose.d:23 with the following message:" > /dev/null
+echo "$OUTPUT" | grep -cE "^\s+unittest failure" > /dev/null
+echo "$OUTPUT" | grep -cE "silly.d" > /dev/null
 
 rm -r $(dirname "${BASH_SOURCE[0]}")/.dub $(dirname "${BASH_SOURCE[0]}")/verbose-test-unittest
