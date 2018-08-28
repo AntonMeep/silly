@@ -1,0 +1,17 @@
+{
+	"name": "help",
+	"sourceFiles": ["help.d", "../common.d"],
+	"importPaths": ["."],
+	"configurations": [
+		{
+			"name": "executable",
+			"targetType": "executable"
+		},
+		{
+			"name": "unittest",
+			"dependencies": {
+				"silly": {"path": "../../"}
+			}
+		}
+	]
+}
