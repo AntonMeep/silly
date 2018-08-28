@@ -1,6 +1,6 @@
 . $TESTSUITE/common.sh
 
-OUTPUT=$(dub test --root=$(dirname "${BASH_SOURCE[0]}") --skip-registry=all --nodeps -q -- --no-colours 2>&1 || true)
+OUTPUT=$(dub test -b unittest-cov --root=$(dirname "${BASH_SOURCE[0]}") --skip-registry=all --nodeps -q -- --no-colours 2>&1 || true)
 
 echo "$OUTPUT" | grep -c "✗ issue_2 Throwing an exception with multi-line message" > /dev/null
 echo "$OUTPUT" | grep -c "Summary: 0 passed, 1 failed" > /dev/null

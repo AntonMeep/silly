@@ -1,6 +1,6 @@
 . $TESTSUITE/common.sh
 
-OUTPUT=$(dub test --root=$(dirname "${BASH_SOURCE[0]}") --skip-registry=all --nodeps -q -- --no-colours 2>&1)
+OUTPUT=$(dub test -b unittest-cov --root=$(dirname "${BASH_SOURCE[0]}") --skip-registry=all --nodeps -q -- --no-colours 2>&1)
 
 echo "$OUTPUT" | grep -c "✓ include_exclude aabbaa" > /dev/null
 echo "$OUTPUT" | grep -c "✓ include_exclude aabbbb" > /dev/null

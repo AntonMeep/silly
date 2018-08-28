@@ -1,6 +1,6 @@
 {
 	"name": "include_exclude",
-	"sourceFiles": ["include_exclude.d"],
+	"sourceFiles": ["include_exclude.d", "../common.d"],
 	"importPaths": ["."],
 	"configurations": [
 		{

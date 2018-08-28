@@ -12,6 +12,8 @@ TESTSUITE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 SOMETHING_FAILED=0
 
+mkdir -p $TESTSUITE/.coverage
+
 for test in $(ls -vd $TESTSUITE/*/); do
 	log Performing test $(basename $test)...
 	

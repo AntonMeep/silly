@@ -1,6 +1,6 @@
 {
 	"name": "verbose",
-	"sourceFiles": ["verbose.d"],
+	"sourceFiles": ["verbose.d", "../common.d"],
 	"importPaths": ["."],
 	"configurations": [
 		{

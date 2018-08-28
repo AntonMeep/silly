@@ -1,6 +1,7 @@
 dmd:
   image: ohboi/minidmd
-  script: ./test/run.sh
+  script: ./test/run.sh && dub fetch covered && dub run covered -- -a test/.coverage/silly.lst
+  coverage: '/Average: \d+\.\d+%/'
 
 ldc:
   image: ohboi/minildc

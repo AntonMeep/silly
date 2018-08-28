@@ -1,3 +1,4 @@
 .dub
 *.log
 *.sum
+.coverage
