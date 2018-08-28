@@ -4,8 +4,7 @@
 	"importPaths": ["."],
 	"configurations": [
 		{
-			"name": "executable",
-			"targetType": "executable"
+			"name": "library"
 		},
 		{
 			"name": "unittest",
