@@ -8,7 +8,7 @@ echo "$OUTPUT" | grep -cE "✓ verbose 3 \(25[0-9]\.[0-9]{3} ms\)" > /dev/null
 echo "$OUTPUT" | grep -c  "✗ verbose 4" > /dev/null
 echo "$OUTPUT" | grep -c "Summary: 3 passed, 1 failed" > /dev/null
 
-echo "$OUTPUT" | grep -c "core.exception.AssertError has been thrown from verbose.d:23 with the following message:" > /dev/null
+echo "$OUTPUT" | grep -c "core.exception.AssertError has been thrown" > /dev/null
 echo "$OUTPUT" | grep -cE "^\s+unittest failure" > /dev/null
 echo "$OUTPUT" | grep -cE "silly.d" > /dev/null
 
