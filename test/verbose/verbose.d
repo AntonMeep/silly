@@ -3,7 +3,7 @@ module verbose;
 import core.time;
 import core.thread;
 
-@("1")
+@("1", "this UDA should be ignored")
 unittest {
 	Thread.getThis.sleep(1.seconds);
 }
