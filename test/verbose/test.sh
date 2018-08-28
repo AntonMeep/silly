@@ -9,7 +9,7 @@ echo "$OUTPUT" | grep -c  "✗ verbose 4" > /dev/null
 echo "$OUTPUT" | grep -c "Summary: 3 passed, 1 failed" > /dev/null
 
 echo "$OUTPUT" | grep -c "core.exception.AssertError has been thrown" > /dev/null
-echo "$OUTPUT" | grep -cE "^\s+unittest failure" > /dev/null
+echo "$OUTPUT" | grep -cE "^\s+(unittest failure|Assertion failure)" > /dev/null
 echo "$OUTPUT" | grep -cE "silly.d" > /dev/null
 
 rm -r $(dirname "${BASH_SOURCE[0]}")/.dub $(dirname "${BASH_SOURCE[0]}")/verbose-test-unittest
