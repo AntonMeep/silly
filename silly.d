@@ -10,15 +10,10 @@ static if(!__traits(compiles, () {static import dub_test_root;})) {
 
 import core.runtime     : Runtime, UnitTestResult;
 import core.time        : Duration, MonoTime;
-import std.algorithm    : canFind, max;
 import std.concurrency  : receive, send, spawn, thisTid, ownerTid, receiveOnly;
 import std.getopt       : getopt;
-import std.meta         : Alias;
 import std.parallelism  : TaskPool, totalCPUs;
-import std.regex        : matchFirst;
-import std.stdio        : stdout, writef, writeln, writefln;
-import std.string       : indexOf, leftJustifier, lastIndexOf, lineSplitter;
-import std.traits       : fullyQualifiedName, isAggregateType;
+import std.stdio        : writef, writeln, writefln;
 
 shared static this() {
 	Runtime.extendedModuleUnitTester = () {
@@ -47,6 +42,8 @@ shared static this() {
 		);
 
 		if(getoptResult.helpWanted) {
+			import std.string : leftJustifier;
+
 			"Usage:\n\tdub test -- <options>\n\nOptions:".writefln;
 
 			foreach(option; getoptResult.options)
@@ -61,10 +58,12 @@ shared static this() {
 
 		// Test discovery
 		foreach(m; dub_test_root.allModules) {
+			import std.traits : fullyQualifiedName, isAggregateType;
 			static if(__traits(compiles, __traits(getUnitTests, m)) &&
 					!(__traits(isTemplate, m) || (__traits(compiles, isAggregateType!m) && isAggregateType!m))) {
 				alias module_ = m;
 			} else {
+				import std.meta : Alias;
 				// For cases when module contains member of the same name
 				alias module_ = Alias!(__traits(parent, m));
 			}
@@ -87,6 +86,7 @@ shared static this() {
 		auto started = MonoTime.currTime;
 
 		with(new TaskPool(threads)) {
+			import std.regex : matchFirst;
 			foreach(test; parallel(tests, 1)) {
 				if((!include && !exclude) ||
 					(include && !(test.fullName ~ " " ~ test.testName).matchFirst(include).empty) ||
@@ -104,6 +104,9 @@ shared static this() {
 }
 
 void resultLogger(bool verbose) {
+	import std.algorithm : canFind;
+	import std.string    : lastIndexOf, lineSplitter;
+
 	Duration timeElapsed;
 	size_t passed, failed;
 
@@ -222,6 +225,7 @@ enum Colour {
 }
 
 static struct Console {
+	import std.stdio : stdout;
 	static void init() {
 		if(!noColours) {
 			version(Posix) {
@@ -264,6 +268,8 @@ string getTestName(alias test)() {
 }
 
 string truncateName(string s, bool verbose = false) {
+	import std.algorithm : max;
+	import std.string    : indexOf;
 	return s.length > 30 && !verbose
 		? s[max(s.indexOf('.', s.length - 30), s.length - 30) .. $]
 		: s;
