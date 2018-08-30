@@ -9,10 +9,9 @@ static if(!__traits(compiles, () {static import dub_test_root;})) {
 }
 
 import core.runtime     : Runtime, UnitTestResult;
-import core.time        : Duration, MonoTime, msecs;
-import std.algorithm    : any, canFind, count, max;
+import core.time        : Duration, MonoTime;
+import std.algorithm    : canFind, max;
 import std.concurrency  : receive, send, spawn, thisTid, ownerTid, receiveOnly;
-import std.format       : format;
 import std.getopt       : getopt;
 import std.meta         : Alias;
 import std.parallelism  : TaskPool, totalCPUs;
@@ -75,15 +74,12 @@ shared static this() {
 				tests ~= Test(fullyQualifiedName!test, getTestName!test, &test);
 
 			// Unittests in structs and classes
-			foreach(member; __traits(derivedMembers, module_)) {
+			foreach(member; __traits(derivedMembers, module_))
 				static if(__traits(compiles, __traits(parent, __traits(getMember, module_, member))) &&
 					__traits(isSame, __traits(parent, __traits(getMember, module_, member)), module_) &&
-					__traits(compiles, __traits(getUnitTests, __traits(getMember, module_, member)))) {
-					foreach(test; __traits(getUnitTests, __traits(getMember, module_, member))) {
-						tests ~= Test(fullyQualifiedName!test, getTestName!test, &test);
-					}
-				}
-			}
+					__traits(compiles, __traits(getUnitTests, __traits(getMember, module_, member))))
+						foreach(test; __traits(getUnitTests, __traits(getMember, module_, member)))
+							tests ~= Test(fullyQualifiedName!test, getTestName!test, &test);
 		}
 
 		auto loggerTid = spawn(&resultLogger, verbose);
@@ -95,7 +91,7 @@ shared static this() {
 				if((!include && !exclude) ||
 					(include && !(test.fullName ~ " " ~ test.testName).matchFirst(include).empty) ||
 					(exclude &&  (test.fullName ~ " " ~ test.testName).matchFirst(exclude).empty))
-						send(loggerTid, test.executeTest);
+						loggerTid.send(test.executeTest);
 			}
 
 			finish(true);
