@@ -226,12 +226,19 @@ enum Colour {
 
 static struct Console {
 	import std.stdio : stdout;
+	version(Windows) {
+		import core.sys.windows.wincon : SetConsoleOutputCP;
+		import core.sys.windows.winnls : CP_UTF8;
+	}
+
 	static void init() {
 		if(!noColours) {
 			version(Posix) {
 				import core.sys.posix.unistd;
 				noColours = isatty(STDOUT_FILENO) == 0;
 				return;
+			} else version(Windows) {
+				SetConsoleOutputCP(CP_UTF8);
 			}
 		}
 
