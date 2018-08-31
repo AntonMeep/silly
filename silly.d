@@ -226,38 +226,52 @@ enum Colour {
 
 static struct Console {
 	import std.stdio : stdout;
-	version(Windows) {
-		import core.sys.windows.wincon : SetConsoleOutputCP;
-		import core.sys.windows.winnls : CP_UTF8;
-	}
 
 	static void init() {
-		if(!noColours) {
+		if(noColours) {
+			return;
+		} else {
 			version(Posix) {
 				import core.sys.posix.unistd;
 				noColours = isatty(STDOUT_FILENO) == 0;
-				return;
 			} else version(Windows) {
+				import core.sys.windows.winbase : GetStdHandle, STD_OUTPUT_HANDLE, INVALID_HANDLE_VALUE;
+				import core.sys.windows.wincon  : SetConsoleOutputCP, GetConsoleMode, SetConsoleMode;
+				import core.sys.windows.windef  : DWORD;
+				import core.sys.windows.winnls  : CP_UTF8;
+
 				SetConsoleOutputCP(CP_UTF8);
+
+				auto hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+				DWORD originalMode;
+
+				// TODO: 4 stands for ENABLE_VIRTUAL_TERMINAL_PROCESSING which should be
+				// in druntime v2.082.0
+				noColours = hOut == INVALID_HANDLE_VALUE           ||
+							!GetConsoleMode(hOut, &originalMode)   ||
+							!SetConsoleMode(hOut, originalMode | 4);
 			}
 		}
-
-		noColours = true;
 	}
 
 	static void write(T)(T t, Colour c = Colour.none, bool bright = false) {
-		if(!noColours) {
-			version(Posix) {
-				if(c == Colour.none && bright) {
-					stdout.writef("\033[1m%s\033[m", t);
-				} else {
-					stdout.writef("\033[%d;%dm%s\033[m", bright, c, t);
-				}
-				return;
+		void cwrite() {
+			if(c == Colour.none && bright) {
+				stdout.writef("\033[1m%s\033[m", t);
+			} else {
+				stdout.writef("\033[%d;%dm%s\033[m", bright, c, t);
 			}
 		}
-		
-		stdout.write(t);
+
+		if(noColours) {
+			stdout.write(t);
+		} else {
+			version(Posix) {
+				cwrite();
+			} else version(Windows) {
+				cwrite();
+			}
+		}
 	}
 }
 
