@@ -19,7 +19,7 @@ shared static this() {
 	Runtime.extendedModuleUnitTester = () {
 		bool verbose;
 		size_t passed, failed;
-		uint threads = totalCPUs - 1;
+		uint threads;
 		string include, exclude;
 
 		auto args = Runtime.args;
@@ -28,7 +28,7 @@ shared static this() {
 				"Disable colours",
 				&noColours,
 			"t|threads",
-				"Number of worker threads to use. 0 to disable worker threads",
+				"Number of worker threads. 0 to auto-detect (default)",
 				&threads,
 			"i|include",
 				"Run tests if their name matches specified regular expression",
@@ -51,6 +51,9 @@ shared static this() {
 
 			return UnitTestResult(0, 0, false, false);
 		}
+
+		if(!threads)
+			threads = totalCPUs;
 
 		Console.init;
 
@@ -85,9 +88,9 @@ shared static this() {
 
 		auto started = MonoTime.currTime;
 
-		with(new TaskPool(threads)) {
+		with(new TaskPool(threads-1)) {
 			import std.regex : matchFirst;
-			foreach(test; parallel(tests, 1)) {
+			foreach(test; parallel(tests)) {
 				if((!include && !exclude) ||
 					(include && !(test.fullName ~ " " ~ test.testName).matchFirst(include).empty) ||
 					(exclude &&  (test.fullName ~ " " ~ test.testName).matchFirst(exclude).empty))
