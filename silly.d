@@ -117,15 +117,14 @@ shared static this() {
 
 void writeResult(TestResult result, in bool verbose) {
 	import std.ascii     : newline;
-	import std.array     : appender;
 	import std.format    : formattedWrite;
 	import std.algorithm : canFind;
 	import std.range     : drop;
 	import std.string    : lastIndexOf, lineSplitter;
 
-	auto buffer = appender!string;
+	auto writer = stdout.lockingTextWriter;
 
-	buffer.formattedWrite("%s %s %s",
+	writer.formattedWrite("%s %s %s",
 		result.succeed
 			? Console.colour(" ✓ ", Colour.ok)
 			: Console.colour(" ✗ ", Colour.achtung),
@@ -134,12 +133,12 @@ void writeResult(TestResult result, in bool verbose) {
 	);
 
 	if(verbose)
-		buffer.formattedWrite(" (%.3f ms)", (cast(real) result.duration.total!"usecs") / 10.0f ^^ 3);
+		writer.formattedWrite(" (%.3f ms)", (cast(real) result.duration.total!"usecs") / 10.0f ^^ 3);
 
-	buffer.put(newline);
+	writer.put(newline);
 
 	foreach(th; result.thrown) {
-		buffer.formattedWrite("    %s@%s(%d): %s%s",
+		writer.formattedWrite("    %s@%s(%d): %s%s",
 			th.type,
 			th.file,
 			th.line,
@@ -147,19 +146,17 @@ void writeResult(TestResult result, in bool verbose) {
 			newline,
 		);
 		foreach(line; th.message.lineSplitter.drop(1))
-			buffer.formattedWrite("      %s%s", line, newline);
+			writer.formattedWrite("      %s%s", line, newline);
 
-		buffer.formattedWrite("    --- Stack trace ---%s", newline);
+		writer.formattedWrite("    --- Stack trace ---%s", newline);
 		if(verbose) {
 			foreach(line; th.info)
-				buffer.formattedWrite("    %s%s", line, newline);
+				writer.formattedWrite("    %s%s", line, newline);
 		} else {
 			for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
-				buffer.formattedWrite("    %s%s", th.info[i], newline);
+				writer.formattedWrite("    %s%s", th.info[i], newline);
 		}
 	}
-
-	stdout.write(buffer.data);
 }
 
 TestResult executeTest(Test test) {
