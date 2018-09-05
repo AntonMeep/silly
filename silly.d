@@ -13,10 +13,11 @@ import std.ascii        : newline;
 import std.stdio        : stdout;
 
 shared static this() {
+	import core.runtime    : Runtime, UnitTestResult;
+	import std.getopt      : getopt;
+	import std.parallelism : TaskPool, totalCPUs;
+
 	Runtime.extendedModuleUnitTester = () {
-		import core.runtime    : Runtime, UnitTestResult;
-		import std.getopt      : getopt;
-		import std.parallelism : TaskPool, totalCPUs;
 		bool verbose;
 		shared size_t passed, failed;
 		uint threads;
@@ -216,7 +217,7 @@ enum Colour {
 }
 
 static struct Console {
-	import std.format : format;
+	import std.conv : text;
 
 	static void init() {
 		if(noColours) {
@@ -247,17 +248,17 @@ static struct Console {
 
 	static string colour(T)(T t, Colour c = Colour.none) {
 		if(noColours) {
-			return "%s".format(t);
+			return text(t);
 		} else {
-			return "\033[0;%dm%s\033[m".format(c, t);
+			return text("\033[", cast(int) c, "m", t, "\033[m");
 		}
 	}
 
 	static string emphasis(T)(T t) {
 		if(noColours) {
-			return "%s".format(t);
+			return text(t);
 		} else {
-			return "\033[1m%s\033[m".format(t);
+			return text("\033[1m", t, "\033[m");
 		}
 	}
 }
