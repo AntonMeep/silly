@@ -8,14 +8,15 @@ static if(!__traits(compiles, () {static import dub_test_root;})) {
 	static import dub_test_root;
 }
 
-import core.runtime     : Runtime, UnitTestResult;
 import core.time        : Duration, MonoTime;
-import std.getopt       : getopt;
-import std.parallelism  : TaskPool, totalCPUs;
-import std.stdio        : stdout, writef, writeln, writefln;
+import std.ascii        : newline;
+import std.stdio        : stdout;
 
 shared static this() {
 	Runtime.extendedModuleUnitTester = () {
+		import core.runtime    : Runtime, UnitTestResult;
+		import std.getopt      : getopt;
+		import std.parallelism : TaskPool, totalCPUs;
 		bool verbose;
 		shared size_t passed, failed;
 		uint threads;
@@ -43,10 +44,10 @@ shared static this() {
 		if(getoptResult.helpWanted) {
 			import std.string : leftJustifier;
 
-			"Usage:\n\tdub test -- <options>\n\nOptions:".writefln;
+			stdout.writefln("Usage:%1$s\tdub test -- <options>%1$s%1$sOptions:", newline);
 
 			foreach(option; getoptResult.options)
-				"  %s\t%s\t%s\n".writef(option.optShort, option.optLong.leftJustifier(20), option.help);
+				stdout.writefln("  %s\t%s\t%s", option.optShort, option.optLong.leftJustifier(20), option.help);
 
 			return UnitTestResult(0, 0, false, false);
 		}
@@ -103,8 +104,8 @@ shared static this() {
 			finish(true);
 		}
 
-		writeln;
-		"%s: %s passed, %s failed in %d ms".writefln(
+		stdout.writeln;
+		stdout.writefln("%s: %s passed, %s failed in %d ms",
 			Console.emphasis("Summary"),
 			Console.colour(passed, Colour.ok),
 			Console.colour(failed, failed ? Colour.achtung : Colour.none),
@@ -116,7 +117,6 @@ shared static this() {
 }
 
 void writeResult(TestResult result, in bool verbose) {
-	import std.ascii     : newline;
 	import std.format    : formattedWrite;
 	import std.algorithm : canFind;
 	import std.range     : drop;
