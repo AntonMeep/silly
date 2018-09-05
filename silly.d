@@ -8,9 +8,9 @@ static if(!__traits(compiles, () {static import dub_test_root;})) {
 	static import dub_test_root;
 }
 
-import core.time        : Duration, MonoTime;
-import std.ascii        : newline;
-import std.stdio        : stdout;
+import core.time : Duration, MonoTime;
+import std.ascii : newline;
+import std.stdio : stdout;
 
 shared static this() {
 	import core.runtime    : Runtime, UnitTestResult;
