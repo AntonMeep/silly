@@ -9,7 +9,7 @@ echo "$OUTPUT" | grep -c  "✗ verbose 4"                             > /dev/nul
 echo "$OUTPUT" | grep -c "Summary: 3 passed, 1 failed"              > /dev/null
 echo "$OUTPUT" | grep -cv "this UDA should be ignored"              > /dev/null
 
-echo "$OUTPUT" | grep -c "core\.exception\.AssertError@verbose\.d"  > /dev/null
+echo "$OUTPUT" | grep -c "core\.exception\.AssertError@.*verbose\.d"> /dev/null
 echo "$OUTPUT" | grep -cE "\s+(unittest failure|Assertion failure)" > /dev/null
 echo "$OUTPUT" | grep -cE "silly.d" > /dev/null
 
