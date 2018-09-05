@@ -124,10 +124,10 @@ void writeResult(TestResult result, in bool verbose) {
 
 	auto writer = stdout.lockingTextWriter;
 
-	writer.formattedWrite("%s %s %s",
+	writer.formattedWrite(" %s %s %s",
 		result.succeed
-			? Console.colour(" ✓ ", Colour.ok)
-			: Console.colour(" ✗ ", Colour.achtung),
+			? Console.colour("✓", Colour.ok)
+			: Console.colour("✗", Colour.achtung),
 		Console.emphasis(result.test.fullName[0..result.test.fullName.lastIndexOf('.')].truncateName(verbose)),
 		result.test.testName,
 	);
