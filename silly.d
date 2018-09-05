@@ -108,6 +108,7 @@ shared static this() {
 
 void resultLogger(bool verbose) {
 	import std.algorithm : canFind;
+	import std.range     : drop;
 	import std.string    : lastIndexOf, lineSplitter;
 
 	Duration timeElapsed;
@@ -134,10 +135,9 @@ void resultLogger(bool verbose) {
 				writeln;
 
 				foreach(th; result.thrown) {
-					"    %s has been thrown from %s:%d with the following message:"
-						.writefln(th.type, th.file, th.line);
-					foreach(line; th.message.lineSplitter)
-						"      ".writeln(line);
+					"    %s@%s(%d): %s".writefln(th.type, th.file, th.line, th.message.lineSplitter.front);
+					foreach(line; th.message.lineSplitter.drop(1))
+						"      %s".writefln(line);
 
 					writeln("    --- Stack trace ---");
 					if(verbose) {
@@ -147,7 +147,6 @@ void resultLogger(bool verbose) {
 						for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
 							writeln("    ", th.info[i]);
 					}
-					writeln("    -------------------");
 				}
 			},
 			(Duration time) {
