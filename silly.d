@@ -8,7 +8,6 @@ static if(!__traits(compiles, () {static import dub_test_root;})) {
 	static import dub_test_root;
 }
 
-import core.atomic      : atomicOp;
 import core.runtime     : Runtime, UnitTestResult;
 import core.time        : Duration, MonoTime;
 import std.getopt       : getopt;
@@ -87,7 +86,9 @@ shared static this() {
 		auto started = MonoTime.currTime;
 
 		with(new TaskPool(threads-1)) {
-			import std.regex : matchFirst;
+			import core.atomic : atomicOp;
+			import std.regex   : matchFirst;
+
 			foreach(test; parallel(tests)) {
 				if((!include && !exclude) ||
 					(include && !(test.fullName ~ " " ~ test.testName).matchFirst(include).empty) ||
@@ -103,51 +104,62 @@ shared static this() {
 		}
 
 		writeln;
-		Console.write("Summary: ", Colour.none, true);
-		Console.write(passed, Colour.ok);
-		" passed, ".writef;
-
-		Console.write(failed, failed ? Colour.achtung : Colour.none);
-		" failed in %d ms\n".writef((MonoTime.currTime - started).total!"msecs");
+		"%s: %s passed, %s failed in %d ms".writefln(
+			Console.emphasis("Summary"),
+			Console.colour(passed, Colour.ok),
+			Console.colour(failed, failed ? Colour.achtung : Colour.none),
+			(MonoTime.currTime - started).total!"msecs",
+		);
 
 		return UnitTestResult(passed + failed, passed, false, false);
 	};
 }
 
 void writeResult(TestResult result, in bool verbose) {
+	import std.ascii     : newline;
+	import std.array     : appender;
+	import std.format    : formattedWrite;
 	import std.algorithm : canFind;
 	import std.range     : drop;
 	import std.string    : lastIndexOf, lineSplitter;
 
-	stdout.lock;
-	scope(exit) stdout.unlock;
+	auto buffer = appender!string;
 
-	result.succeed
-		? Console.write(" ✓ ", Colour.ok, true)
-		: Console.write(" ✗ ", Colour.achtung, true);
-
-	Console.write(result.test.fullName[0..result.test.fullName.lastIndexOf('.')].truncateName(verbose), Colour.none, true);
-	" %s".writef(result.test.testName);
+	buffer.formattedWrite("%s %s %s",
+		result.succeed
+			? Console.colour(" ✓ ", Colour.ok)
+			: Console.colour(" ✗ ", Colour.achtung),
+		Console.emphasis(result.test.fullName[0..result.test.fullName.lastIndexOf('.')].truncateName(verbose)),
+		result.test.testName,
+	);
 
 	if(verbose)
-		" (%.3f ms)".writef((cast(real) result.duration.total!"usecs") / 10.0f ^^ 3);
+		buffer.formattedWrite(" (%.3f ms)", (cast(real) result.duration.total!"usecs") / 10.0f ^^ 3);
 
-	writeln;
+	buffer.put(newline);
 
 	foreach(th; result.thrown) {
-		"    %s@%s(%d): %s".writefln(th.type, th.file, th.line, th.message.lineSplitter.front);
+		buffer.formattedWrite("    %s@%s(%d): %s%s",
+			th.type,
+			th.file,
+			th.line,
+			th.message.lineSplitter.front,
+			newline,
+		);
 		foreach(line; th.message.lineSplitter.drop(1))
-			"      %s".writefln(line);
+			buffer.formattedWrite("      %s%s", line, newline);
 
-		writeln("    --- Stack trace ---");
+		buffer.formattedWrite("    --- Stack trace ---%s", newline);
 		if(verbose) {
 			foreach(line; th.info)
-				writeln("    ", line);
+				buffer.formattedWrite("    %s%s", line, newline);
 		} else {
 			for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
-				writeln("    ", th.info[i]);
+				buffer.formattedWrite("    %s%s", th.info[i], newline);
 		}
 	}
+
+	stdout.write(buffer.data);
 }
 
 TestResult executeTest(Test test) {
@@ -210,6 +222,8 @@ enum Colour {
 }
 
 static struct Console {
+	import std.format : format;
+
 	static void init() {
 		if(noColours) {
 			return;
@@ -237,23 +251,19 @@ static struct Console {
 		}
 	}
 
-	static void write(T)(T t, Colour c = Colour.none, bool bright = false) {
-		void cwrite() {
-			if(c == Colour.none && bright) {
-				stdout.writef("\033[1m%s\033[m", t);
-			} else {
-				stdout.writef("\033[%d;%dm%s\033[m", bright, c, t);
-			}
-		}
-
+	static string colour(T)(T t, Colour c = Colour.none) {
 		if(noColours) {
-			stdout.write(t);
+			return "%s".format(t);
 		} else {
-			version(Posix) {
-				cwrite();
-			} else version(Windows) {
-				cwrite();
-			}
+			return "\033[0;%dm%s\033[m".format(c, t);
+		}
+	}
+
+	static string emphasis(T)(T t) {
+		if(noColours) {
+			return "%s".format(t);
+		} else {
+			return "\033[1m%s\033[m".format(t);
 		}
 	}
 }
