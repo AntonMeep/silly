@@ -8,17 +8,17 @@ static if(!__traits(compiles, () {static import dub_test_root;})) {
 	static import dub_test_root;
 }
 
+import core.atomic      : atomicOp;
 import core.runtime     : Runtime, UnitTestResult;
 import core.time        : Duration, MonoTime;
-import std.concurrency  : receive, send, spawn, thisTid, ownerTid, receiveOnly;
 import std.getopt       : getopt;
 import std.parallelism  : TaskPool, totalCPUs;
-import std.stdio        : writef, writeln, writefln;
+import std.stdio        : stdout, writef, writeln, writefln;
 
 shared static this() {
 	Runtime.extendedModuleUnitTester = () {
 		bool verbose;
-		size_t passed, failed;
+		shared size_t passed, failed;
 		uint threads;
 		string include, exclude;
 
@@ -84,8 +84,6 @@ shared static this() {
 							tests ~= Test(fullyQualifiedName!test, getTestName!test, &test);
 		}
 
-		auto loggerTid = spawn(&resultLogger, verbose);
-
 		auto started = MonoTime.currTime;
 
 		with(new TaskPool(threads-1)) {
@@ -93,92 +91,70 @@ shared static this() {
 			foreach(test; parallel(tests)) {
 				if((!include && !exclude) ||
 					(include && !(test.fullName ~ " " ~ test.testName).matchFirst(include).empty) ||
-					(exclude &&  (test.fullName ~ " " ~ test.testName).matchFirst(exclude).empty))
-						loggerTid.send(test.executeTest);
+					(exclude &&  (test.fullName ~ " " ~ test.testName).matchFirst(exclude).empty)) {
+						auto result = test.executeTest;
+						result.writeResult(verbose);
+
+						atomicOp!"+="(result.succeed ? passed : failed, 1UL);
+				}
 			}
 
 			finish(true);
 		}
 
-		loggerTid.send(MonoTime.currTime - started);
+		writeln;
+		Console.write("Summary: ", Colour.none, true);
+		Console.write(passed, Colour.ok);
+		" passed, ".writef;
 
-		return receiveOnly!UnitTestResult;
+		Console.write(failed, failed ? Colour.achtung : Colour.none);
+		" failed in %d ms\n".writef((MonoTime.currTime - started).total!"msecs");
+
+		return UnitTestResult(passed + failed, passed, false, false);
 	};
 }
 
-void resultLogger(bool verbose) {
+void writeResult(TestResult result, in bool verbose) {
 	import std.algorithm : canFind;
 	import std.range     : drop;
 	import std.string    : lastIndexOf, lineSplitter;
 
-	Duration timeElapsed;
-	size_t passed, failed;
+	stdout.lock;
+	scope(exit) stdout.unlock;
 
-	bool done = false;
-	while(!done)
-		receive(
-			(TestResult result) {
-				if(result.succeed) {
-					Console.write(" ✓ ", Colour.ok, true);
-					++passed;
-				} else {
-					Console.write(" ✗ ", Colour.achtung, true);
-					++failed;
-				}
+	result.succeed
+		? Console.write(" ✓ ", Colour.ok, true)
+		: Console.write(" ✗ ", Colour.achtung, true);
 
-				Console.write(result.test.fullName[0..result.test.fullName.lastIndexOf('.')].truncateName(verbose), Colour.none, true);
-				" %s".writef(result.test.testName);
+	Console.write(result.test.fullName[0..result.test.fullName.lastIndexOf('.')].truncateName(verbose), Colour.none, true);
+	" %s".writef(result.test.testName);
 
-				if(verbose)
-					" (%.3f ms)".writef((cast(real) result.duration.total!"usecs") / 10.0f ^^ 3);
-
-				writeln;
-
-				foreach(th; result.thrown) {
-					"    %s@%s(%d): %s".writefln(th.type, th.file, th.line, th.message.lineSplitter.front);
-					foreach(line; th.message.lineSplitter.drop(1))
-						"      %s".writefln(line);
-
-					writeln("    --- Stack trace ---");
-					if(verbose) {
-						foreach(line; th.info)
-							writeln("    ", line);
-					} else {
-						for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
-							writeln("    ", th.info[i]);
-					}
-				}
-			},
-			(Duration time) {
-				done = true;
-				timeElapsed = time;
-
-				ownerTid.send(UnitTestResult(passed + failed, passed, false, false));
-			},
-		);
+	if(verbose)
+		" (%.3f ms)".writef((cast(real) result.duration.total!"usecs") / 10.0f ^^ 3);
 
 	writeln;
-	Console.write("Summary: ", Colour.none, true);
-	Console.write(passed, Colour.ok);
-	" passed, ".writef;
 
-	Console.write(failed, failed ? Colour.achtung : Colour.none);
-	" failed in %d ms\n".writef(timeElapsed.total!"msecs");
+	foreach(th; result.thrown) {
+		"    %s@%s(%d): %s".writefln(th.type, th.file, th.line, th.message.lineSplitter.front);
+		foreach(line; th.message.lineSplitter.drop(1))
+			"      %s".writefln(line);
+
+		writeln("    --- Stack trace ---");
+		if(verbose) {
+			foreach(line; th.info)
+				writeln("    ", line);
+		} else {
+			for(size_t i = 0; i < th.info.length && !th.info[i].canFind(__FILE__); ++i)
+				writeln("    ", th.info[i]);
+		}
+	}
 }
 
 TestResult executeTest(Test test) {
 	import core.exception : AssertError;
 	auto ret = TestResult(test);
-	auto started = MonoTime.currTime;
 
-	try {
-		scope(exit) ret.duration = MonoTime.currTime - started;
-		test.ptr();
-		ret.succeed = true;
-	} catch(Throwable t) {
-		if(!(cast(Exception) t || cast(AssertError) t))
-			throw t;
-
+	void trace(Throwable t) {
 		foreach(th; t) {
 			immutable(string)[] trace;
 			foreach(i; th.info)
@@ -186,6 +162,17 @@ TestResult executeTest(Test test) {
 
 			ret.thrown ~= Thrown(typeid(th).name, th.message.idup, th.file, th.line, trace);
 		}
+	}
+
+	auto started = MonoTime.currTime;
+	try {
+		scope(exit) ret.duration = MonoTime.currTime - started;
+		test.ptr();
+		ret.succeed = true;
+	} catch(Exception e) {
+		trace(e);
+	} catch(AssertError a) {
+		trace(a);
 	}
 
 	return ret;
@@ -223,8 +210,6 @@ enum Colour {
 }
 
 static struct Console {
-	import std.stdio : stdout;
-
 	static void init() {
 		if(noColours) {
 			return;
