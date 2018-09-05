@@ -222,7 +222,6 @@ __gshared bool noColours;
 enum Colour {
 	none,
 	ok = 32,
-	// lit = 35,
 	achtung = 31,
 }
 
