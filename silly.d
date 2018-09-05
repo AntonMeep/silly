@@ -169,8 +169,16 @@ void resultLogger(bool verbose) {
 TestResult executeTest(Test test) {
 	import core.exception : AssertError;
 	auto ret = TestResult(test);
+	auto started = MonoTime.currTime;
 
-	void trace(Throwable t) {
+	try {
+		scope(exit) ret.duration = MonoTime.currTime - started;
+		test.ptr();
+		ret.succeed = true;
+	} catch(Throwable t) {
+		if(!(cast(Exception) t || cast(AssertError) t))
+			throw t;
+
 		foreach(th; t) {
 			immutable(string)[] trace;
 			foreach(i; th.info)
@@ -178,17 +186,6 @@ TestResult executeTest(Test test) {
 
 			ret.thrown ~= Thrown(typeid(th).name, th.message.idup, th.file, th.line, trace);
 		}
-	}
-
-	auto started = MonoTime.currTime;
-	try {
-		scope(exit) ret.duration = MonoTime.currTime - started;
-		test.ptr();
-		ret.succeed = true;
-	} catch(Exception e) {
-		trace(e);
-	} catch(AssertError a) {
-		trace(a);
 	}
 
 	return ret;
