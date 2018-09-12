@@ -267,7 +267,7 @@ string getTestName(alias test)() {
 	string name = __traits(identifier, test);
 
 	foreach(attribute; __traits(getAttributes, test)) {
-		if(is(typeof(attribute) : string)) {
+		static if(is(typeof(attribute) : string)) {
 			name = attribute;
 			break;
 		}
