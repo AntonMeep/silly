@@ -139,7 +139,7 @@ void writeResult(TestResult result, in bool verbose) {
 	writer.put(newline);
 
 	foreach(th; result.thrown) {
-		writer.formattedWrite("    %s@%s(%d): %s%s",
+		writer.formattedWrite("    %s thrown from %s on line %d: %s%s",
 			th.type,
 			th.file,
 			th.line,
