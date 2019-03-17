@@ -1,12 +1,16 @@
-silly [![Repository](https://img.shields.io/badge/repository-on%20GitLab-orange.svg)](https://gitlab.com/ohboi/silly) [![pipeline status](https://gitlab.com/ohboi/silly/badges/master/pipeline.svg)](https://gitlab.com/ohboi/silly/commits/master) [![coverage report](https://gitlab.com/ohboi/silly/badges/master/coverage.svg)](https://gitlab.com/ohboi/silly/commits/master) [![MIT Licence](https://img.shields.io/badge/licence-MIT-blue.svg)](https://gitlab.com/ohboi/silly/blob/master/LICENCE) [![Package version](https://img.shields.io/dub/v/silly.svg)](https://gitlab.com/ohboi/silly/tags)
+silly [![Repository](https://img.shields.io/badge/repository-on%20GitLab-orange.svg)](https://gitlab.com/AntonMeep/silly) [![pipeline 
+status](https://gitlab.com/AntonMeep/silly/badges/master/pipeline.svg)](https://gitlab.com/AntonMeep/silly/commits/master) [![coverage 
+report](https://gitlab.com/AntonMeep/silly/badges/master/coverage.svg)](https://gitlab.com/AntonMeep/silly/commits/master) [![MIT 
+Licence](https://img.shields.io/badge/licence-MIT-blue.svg)](https://gitlab.com/AntonMeep/silly/blob/master/LICENCE) [![Package 
+version](https://img.shields.io/dub/v/silly.svg)](https://gitlab.com/AntonMeep/silly/tags)
 =====
 
 **silly** is a no-nonsense test runner for the D programming language. Instead of re-inventing the wheel and adding more and more levels of abstraction it just works, requiring as little effort from the programmer as possible.
 
-> Note that project's development happens on the [GitLab](https://gitlab.com/ohboi/silly).
+> Note that project's development happens on the [GitLab](https://gitlab.com/AntonMeep/silly).
 > GitHub repository is a mirror, it might *not* always be up-to-date.
 
-Make sure to check out project's [homepage](https://ohboi.gitlab.io/silly/) for more information about installation and usage.
+Make sure to check out project's [homepage](https://antonmeep.gitlab.io/silly/) for more information about installation and usage.
 
 ## Why?
 
