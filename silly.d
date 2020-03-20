@@ -113,7 +113,7 @@ shared static this() {
 			(MonoTime.currTime - started).total!"msecs",
 		);
 
-		return UnitTestResult(passed + failed, passed, false, false);
+		return UnitTestResult(cast(uint)(passed + failed), cast(uint)passed, false, false);
 	};
 }
 
